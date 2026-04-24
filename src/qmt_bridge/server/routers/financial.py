@@ -2,7 +2,8 @@
 
 提供上市公司财务报表数据查询端点。
 底层调用 xtquant.xtdata 的财务数据接口：
-- xtdata.get_financial_data()  — 获取财务报表数据（利润表、资产负债表、现金流量表等）
+- xtdata.get_financial_data()      — 获取财务报表数据（利润表、资产负债表、现金流量表等）
+- xtdata.get_financial_data_ori()  — 获取原始格式财务数据（部分券商版本未提供）
 """
 
 from fastapi import APIRouter, Query
@@ -62,6 +63,20 @@ def get_financial_data_ori(
     """获取原始格式财务数据 → xtdata.get_financial_data_ori()"""
     stock_list = [s.strip() for s in stocks.split(",")]
     table_list = [t.strip() for t in tables.split(",") if t.strip()] if tables else []
+
+    if not hasattr(xtdata, "get_financial_data_ori"):
+        raw = xtdata.get_financial_data(
+            stock_list,
+            table_list=table_list,
+            start_time=start_time,
+            end_time=end_time,
+            report_type=report_type,
+        )
+        return {
+            "data": _financial_data_to_records(raw),
+            "fallback": "get_financial_data",
+        }
+
     raw = xtdata.get_financial_data_ori(
         stock_list,
         table_list=table_list,

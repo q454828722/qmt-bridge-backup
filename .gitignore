@@ -12,6 +12,7 @@ eggs/
 
 # Virtual environments
 .venv/
+.venv-wsl/
 venv/
 ENV/
 
@@ -46,6 +47,10 @@ data/
 # Logs
 logs/
 *.log
+
+# Research workspace artifacts
+research/.ipynb_checkpoints/
+research/output/
 
 # pytest / coverage
 .pytest_cache/

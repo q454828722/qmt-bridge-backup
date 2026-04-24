@@ -217,9 +217,16 @@ def download_single_kline(
             status["done"] = True
         return status["done"]
 
-    result = client.supply_history_data2(
-        [code], period, start_time, end_time, bson_param, on_progress,
-    )
+    try:
+        result = client.supply_history_data2(
+            [code], period, start_time, end_time, bson_param, on_progress,
+        )
+    except TypeError:
+        # Some broker-bundled xtquant builds expose the older signature:
+        # supply_history_data2(stock_list, period, start_time, end_time, callback).
+        result = client.supply_history_data2(
+            [code], period, start_time, end_time, on_progress,
+        )
 
     if result:
         # result=True: 异步下载已提交，但回调不会触发。

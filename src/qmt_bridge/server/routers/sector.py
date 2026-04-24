@@ -59,7 +59,11 @@ def get_sector_stocks(
 
     底层调用: xtdata.get_stock_list_in_sector(sector, real_timetag=...)
     """
-    stock_list = xtdata.get_stock_list_in_sector(sector, real_timetag=real_timetag)
+    try:
+        stock_list = xtdata.get_stock_list_in_sector(sector, real_timetag=real_timetag)
+    except TypeError:
+        # Some broker-bundled xtquant builds expose only get_stock_list_in_sector(sector_name).
+        stock_list = xtdata.get_stock_list_in_sector(sector)
     return {"sector": sector, "count": len(stock_list), "stocks": stock_list}
 
 

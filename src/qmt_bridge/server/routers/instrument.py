@@ -33,8 +33,14 @@ def get_instrument_detail_list(
 
     底层调用: xtdata.get_instrument_detail_list(stock_list, iscomplete=...)
     """
-    stock_list = [s.strip() for s in stocks.split(",")]
-    raw = xtdata.get_instrument_detail_list(stock_list, iscomplete=iscomplete)
+    stock_list = [s.strip() for s in stocks.split(",") if s.strip()]
+    if hasattr(xtdata, "get_instrument_detail_list"):
+        raw = xtdata.get_instrument_detail_list(stock_list, iscomplete=iscomplete)
+    else:
+        raw = {
+            stock: xtdata.get_instrument_detail(stock, iscomplete=iscomplete)
+            for stock in stock_list
+        }
     return {"data": _numpy_to_python(raw)}
 
 

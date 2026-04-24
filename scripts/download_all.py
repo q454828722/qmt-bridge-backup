@@ -133,6 +133,7 @@ def _run_kline_downloads(
     timeout: int,
     pbar: tqdm,
     label: str,
+    delay: float = 0.0,
 ) -> tuple[int, int, int, list[int], bool]:
     """逐只下载 K 线数据（直接调用 client.supply_history_data2）。
 
@@ -170,18 +171,18 @@ def _run_kline_downloads(
                 fail_count += 1
                 failed_indices.append(idx)
                 logger.error("K线 %s %s 超时 (%d秒)", period, code, timeout)
-                tqdm.write(f"  ⚠ {code} 超时 ({timeout}s)")
+                tqdm.write(f"  ! {code} 超时 ({timeout}s)")
             elif result == "disconnected":
                 fail_count += 1
                 failed_indices.append(idx)
                 logger.error("K线 %s %s 连接断开", period, code)
-                tqdm.write(f"  ⚠ {code} 连接断开")
+                tqdm.write(f"  ! {code} 连接断开")
             else:
                 # "error: ..." 消息
                 fail_count += 1
                 failed_indices.append(idx)
                 logger.error("K线 %s %s %s", period, code, result)
-                tqdm.write(f"  ⚠ {code} {result}")
+                tqdm.write(f"  ! {code} {result}")
         except KeyboardInterrupt:
             global _interrupted
             _interrupted = True
@@ -192,9 +193,11 @@ def _run_kline_downloads(
             fail_count += 1
             failed_indices.append(idx)
             logger.error("K线 %s %s 异常: %s", period, code, exc)
-            tqdm.write(f"  ⚠ {code} 异常: {exc}")
+            tqdm.write(f"  ! {code} 异常: {exc}")
         finally:
             pbar.update(1)
+            if delay > 0 and seq < n_total - 1:
+                time.sleep(delay)
 
     return ok_count, fail_count, timeout_count, failed_indices, False
 
@@ -268,7 +271,7 @@ def _run_financial_batches(
             fail_count += len(batch)
             failed_indices.append(idx)
             logger.error("财务数据批次 %d 超时 (%d秒, %d 只)", idx+1, timeout, len(batch))
-            tqdm.write(f"  ⚠ 批次 {idx+1} 超时 ({timeout}s, {len(batch)} 只)")
+            tqdm.write(f"  ! 批次 {idx+1} 超时 ({timeout}s, {len(batch)} 只)")
         except KeyboardInterrupt:
             global _interrupted  # noqa: PLW0602 (already declared in kline handler)
             _interrupted = True
@@ -283,7 +286,7 @@ def _run_financial_batches(
             fail_count += len(batch)
             failed_indices.append(idx)
             logger.error("财务数据批次 %d 失败 (%d 只): %s", idx+1, len(batch), exc)
-            tqdm.write(f"  ⚠ 批次 {idx+1} 失败 ({len(batch)} 只): {exc}")
+            tqdm.write(f"  ! 批次 {idx+1} 失败 ({len(batch)} 只): {exc}")
         finally:
             executor.shutdown(wait=False, cancel_futures=True)
             pbar.update(batch_items)
@@ -418,7 +421,7 @@ def download_financial(
         retry_stocks = sum(len(batches[i]) for i in failed)
         retry_items = retry_stocks * len(table_list)
         tqdm.write(
-            f"  🔄 财务数据重试第 {retry_round}/{max_retries} 轮: "
+            f"  * 财务数据重试第 {retry_round}/{max_retries} 轮: "
             f"{n_retry} 个批次 ({retry_stocks} 只), 超时 {retry_timeout}s"
         )
         logger.info(
@@ -611,6 +614,8 @@ def download_kline_v2(
     full: bool,
     max_retries: int,
     since_year: int | None = None,
+    kline_delay: float = 0.0,
+    kline_timeout: int | None = None,
 ) -> dict[str, dict[str, int]]:
     """逐只下载 K 线数据。
 
@@ -626,7 +631,7 @@ def download_kline_v2(
     client = xtdata.get_client()
 
     for period in periods:
-        effective_timeout = STOCK_TIMEOUT.get(period, 10)
+        effective_timeout = kline_timeout if kline_timeout is not None else STOCK_TIMEOUT.get(period, 10)
         tqdm.write(f"  周期 {period} 单只超时: {effective_timeout}s")
         logger.info("K线 %s 单只超时: %ds", period, effective_timeout)
 
@@ -731,6 +736,7 @@ def download_kline_v2(
             ok, fail, to, failed, interrupted = _run_kline_downloads(
                 client, group_stocks, all_indices, period, start_time, end_time,
                 incrementally, effective_timeout, pbar, f"K线 {period}",
+                delay=kline_delay,
             )
 
             # 自动重试失败股票
@@ -740,7 +746,7 @@ def download_kline_v2(
                 retry_timeout = int(effective_timeout * (1.5 ** retry_round))
                 n_retry = len(failed)
                 tqdm.write(
-                    f"  🔄 K线 {period} 重试第 {retry_round}/{effective_retries} 轮: "
+                    f"  * K线 {period} 重试第 {retry_round}/{effective_retries} 轮: "
                     f"{n_retry} 只, 超时 {retry_timeout}s"
                 )
                 logger.info(
@@ -752,6 +758,7 @@ def download_kline_v2(
                     client, group_stocks, failed, period, start_time, end_time,
                     incrementally, retry_timeout, retry_pbar,
                     f"K线 {period} 重试{retry_round}",
+                    delay=kline_delay,
                 )
                 retry_pbar.close()
                 ok += r_ok
@@ -838,6 +845,12 @@ def parse_args() -> argparse.Namespace:
         help=f"目标板块，逗号分隔 (默认: {DEFAULT_SECTORS})",
     )
     parser.add_argument(
+        "--limit",
+        type=int,
+        default=0,
+        help="仅下载前 N 只标的，用于小批量压测 (默认: 0 表示不限制)",
+    )
+    parser.add_argument(
         "--timeout",
         type=int,
         default=120,
@@ -848,6 +861,18 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.2,
         help="财务数据批次间延迟秒数 (默认: 0.2，K 线逐只下载无延迟)",
+    )
+    parser.add_argument(
+        "--kline-delay",
+        type=float,
+        default=0.0,
+        help="K 线逐只下载间隔秒数，用于降低行情服务器压力 (默认: 0)",
+    )
+    parser.add_argument(
+        "--kline-timeout",
+        type=int,
+        default=0,
+        help="K 线单只下载超时秒数，0 表示按周期默认值 (默认: 0)",
     )
     parser.add_argument(
         "--max-retries",
@@ -912,7 +937,7 @@ def print_summary(
 
     if has_failure:
         print()
-        print("⚠️  部分批次下载失败，请检查日志后重试")
+        print("! 部分批次下载失败，请检查日志后重试")
 
     if state_saved:
         print()
@@ -947,7 +972,13 @@ def main() -> None:
         logger.error("板块 %s 返回空列表", sectors)
         print(f"错误: 板块 {sectors} 返回空列表，请检查 xtdata 连接状态")
         sys.exit(1)
-    print(f"板块 {sectors} 共 {len(stocks)} 只标的")
+    original_count = len(stocks)
+    if args.limit > 0:
+        stocks = stocks[: args.limit]
+        print(f"板块 {sectors} 共 {original_count} 只标的，本次限量测试前 {len(stocks)} 只")
+        logger.info("限量测试: 原始 %d 只，本次 %d 只", original_count, len(stocks))
+    else:
+        print(f"板块 {sectors} 共 {len(stocks)} 只标的")
 
     periods = [p.strip() for p in args.periods.split(",")]
     tables = [t.strip() for t in args.tables.split(",")]
@@ -966,8 +997,16 @@ def main() -> None:
         print("模式: 逐股精准增量 (基于本地缓存探测)")
         logger.info("逐股精准增量模式")
 
-    logger.info("超时: %d秒/批, 延迟: %.1f秒/批, 最大重试: %d", args.timeout, args.delay, args.max_retries)
-    print(f"超时: {args.timeout}秒/批, 批次间延迟: {args.delay}秒, 失败自动重试: {args.max_retries} 轮")
+    logger.info(
+        "超时: %d秒/批, 财务延迟: %.1f秒/批, K线延迟: %.2f秒/只, K线超时: %d秒, 最大重试: %d",
+        args.timeout, args.delay, args.kline_delay, args.kline_timeout, args.max_retries,
+    )
+    print(
+        f"超时: {args.timeout}秒/批, 财务批次延迟: {args.delay}秒, "
+        f"K线逐只延迟: {args.kline_delay}秒, "
+        f"K线单只超时: {args.kline_timeout or '周期默认'}秒, "
+        f"失败自动重试: {args.max_retries} 轮"
+    )
 
     print()
     t0 = time.time()
@@ -985,6 +1024,8 @@ def main() -> None:
                 full=args.full,
                 max_retries=args.max_retries,
                 since_year=args.since,
+                kline_delay=args.kline_delay,
+                kline_timeout=args.kline_timeout or None,
             )
         else:
             print("跳过 K 线下载")
