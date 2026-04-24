@@ -1,8 +1,8 @@
-# QMT Bridge
+# StarBridge Quant
 
-> 将 miniQMT 的行情与交易能力通过 HTTP/WebSocket 接口暴露给局域网内的任意设备，让你在 Mac/Linux 上也能自由使用 A 股实时行情、历史数据和程序化交易。
+> 当前对外显示名为 **StarBridge Quant**。项目代号、包名和 import 路径暂时仍保持为 `qmt-bridge`，这样不会打断现有脚本、CLI 和研究环境。
 
-**QMT Bridge** is a lightweight API server that wraps [xtquant](https://dict.thinktrader.net/nativeApi/start_now.html) (the Python library behind miniQMT) and exposes market data & trading as standard HTTP/WebSocket endpoints. It runs on your Windows machine alongside the QMT client, allowing any device on your local network — Mac, Linux, or mobile — to access real-time quotes, historical K-lines, sector data, trading, and more.
+**StarBridge Quant** bridges miniQMT/xtquant on Windows with a WSL-first quant research workflow on Linux. It exposes market data and trading as standard HTTP/WebSocket endpoints, while keeping factor research, snapshots, diff audit, and strategy prototyping on your main machine.
 
 ```
 Mac / Linux (主力机)                    Windows (中转站)
@@ -19,12 +19,19 @@ miniQMT / xtquant 只能在 Windows 上运行，且必须依赖 QMT 客户端保
 
 QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT 客户端 + 本项目的 API 服务；你的 Mac/Linux 通过局域网 HTTP/WebSocket 请求获取所有数据，也可以远程下单。核心代码、数据库、分析逻辑全部在你自己的主力机上运行。
 
-## Project Guides
+## Quick Links
 
 - `docs/windows-wsl-operations.md` — Windows 服务 + WSL 研究的运维说明
 - `docs/project-backup-and-architecture.md` — 公开备份范围、架构边界和隐私约束
 - `research/README.md` — WSL 研究工作区说明
 - `docs/local-strategy-api-guide.md` — 本地策略和 API 使用手册
+- `docs/release-2026-04-24.md` — 当前这轮 Windows / WSL 量化研究基线说明
+
+## Repo Layout
+
+- **Windows side** — `miniQMT`、`qmt-server`、缓存下载与健康检查
+- **WSL side** — 因子研究、策略原型、Jupyter、snapshot / diff 审计
+- **Shared codebase** — API client、server routers、研究工具库、子代理定义
 
 ## Features
 
@@ -53,7 +60,7 @@ QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT
 ### 1. 安装
 
 ```bash
-git clone https://github.com/qmt-bridge/qmt-bridge.git
+git clone <repo-url> qmt-bridge
 cd qmt-bridge
 
 # 安装服务端（含 WebSocket 支持）

@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "qmt-bridge"
 dynamic = ["version"]
-description = "HTTP/WebSocket bridge for miniQMT (xtquant) — market data & trading API"
+description = "StarBridge Quant - HTTP/WebSocket bridge for miniQMT (xtquant) with a WSL-first quant research workflow"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
