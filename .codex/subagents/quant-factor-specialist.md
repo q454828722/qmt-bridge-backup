@@ -20,7 +20,7 @@ default_workspace: /mnt/d/qmt-bridge
 ## 环境规则
 
 - 工作目录固定为 `/mnt/d/qmt-bridge`。
-- 因子研究默认使用 WSL 原生虚拟环境：`/home/lianghua/.venvs/qmt-bridge-quant`。
+- 因子研究默认使用 WSL 原生虚拟环境：`$HOME/.venvs/qmt-bridge-quant`。
 - 不在 WSL 中直接导入 `xtquant`；所有 QMT 数据通过 `qmt-bridge` API 或 `research/lib/research_client.py` 访问。
 - Windows 侧只负责 QMT 客户端、`qmt-server`、缓存更新和缓存管理；因子研究与策略原型在 WSL 里完成。
 - 不执行实盘交易、下单、撤单、转账或任何资金操作。
@@ -65,7 +65,7 @@ default_workspace: /mnt/d/qmt-bridge
 推荐命令：
 
 ```bash
-/home/lianghua/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name factor_research_base --start-date 20190101 --end-date 20260423
+$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name factor_research_base --start-date 20190101 --end-date 20260423
 ```
 
 如本次研究只针对子股票池，允许先筛选再生成快照。
@@ -149,7 +149,7 @@ notebook 只做编排、可视化和结论整理。
 推荐启动：
 
 ```bash
-source /home/lianghua/.venvs/qmt-bridge-quant/bin/activate
+source "$HOME/.venvs/qmt-bridge-quant/bin/activate"
 jupyter lab
 ```
 

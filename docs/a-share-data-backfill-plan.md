@@ -57,10 +57,10 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --s
 这些数据量较小，服务启动时也会自动刷新一部分，可在大下载前手动跑一轮：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py POST /api/download/sector_data
-D:\qmt-bridge\.venv\Scripts\python.exe C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py POST /api/download/index_weight
-D:\qmt-bridge\.venv\Scripts\python.exe C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py POST /api/download/cb_data
-D:\qmt-bridge\.venv\Scripts\python.exe C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py POST /api/download/history_contracts
+curl.exe -X POST http://127.0.0.1:18888/api/download/sector_data
+curl.exe -X POST http://127.0.0.1:18888/api/download/index_weight
+curl.exe -X POST http://127.0.0.1:18888/api/download/cb_data
+curl.exe -X POST http://127.0.0.1:18888/api/download/history_contracts
 ```
 
 ## 阶段 1：财务全 A 补齐

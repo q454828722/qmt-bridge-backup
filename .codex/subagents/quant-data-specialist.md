@@ -61,19 +61,19 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --s
 使用 WSL 原生研究环境执行快照和 diff：
 
 ```bash
-/home/lianghua/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name pre_refresh_audit --start-date 20190101 --end-date 20260423
+$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name pre_refresh_audit --start-date 20190101 --end-date 20260423
 ```
 
 刷新完成后再次生成快照：
 
 ```bash
-/home/lianghua/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name post_refresh_audit --start-date 20190101 --end-date 20260423
+$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name post_refresh_audit --start-date 20190101 --end-date 20260423
 ```
 
 然后生成 diff 审计产物：
 
 ```bash
-/home/lianghua/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_snapshot_diff_report.py --left-snapshot <pre_snapshot_dir> --right-snapshot <post_snapshot_dir> --diff-name refresh_audit --instrument-fields name,list_date,delist_date,exchange
+$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_snapshot_diff_report.py --left-snapshot <pre_snapshot_dir> --right-snapshot <post_snapshot_dir> --diff-name refresh_audit --instrument-fields name,list_date,delist_date,exchange
 ```
 
 执行口径：

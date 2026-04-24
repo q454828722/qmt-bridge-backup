@@ -3,10 +3,10 @@
 这份手册面向当前这台 Windows 机器上的本地部署：
 
 - QMT Bridge 地址：`http://127.0.0.1:18888`
-- 局域网地址：`http://192.168.100.5:18888`
+- 局域网地址：`http://<your-lan-ip>:18888`
 - Swagger 文档：`http://127.0.0.1:18888/docs`
-- miniQMT 用户目录：`D:\国金QMT交易端模拟\userdata_mini`
-- 交易账号：`40740540`
+- miniQMT 用户目录：`<miniqmt-userdir>`
+- 交易账号：`<your-trading-account>`
 
 交易、融资融券、资金划转、银证转账、约定式交易接口需要 `X-API-Key`。API Key 在 `D:\qmt-bridge\.env` 里，不要写死到策略代码、Git 仓库或笔记里。
 
@@ -113,9 +113,7 @@ for code, tick in snapshot.items():
 直接 HTTP：
 
 ```powershell
-python C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py `
-  GET /api/market/full_tick `
-  --param stocks=000001.SZ,600519.SH
+curl.exe "http://127.0.0.1:18888/api/market/full_tick?stocks=000001.SZ,600519.SH"
 ```
 
 ## 4. 历史 K 线
@@ -254,9 +252,9 @@ print(trades)
 直接 HTTP：
 
 ```powershell
-python C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py GET /api/trading/asset --auth
-python C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py GET /api/trading/positions --auth
-python C:\Users\lianghua\.codex\skills\qmt-bridge-api\scripts\qmt_api.py GET /api/trading/orders --auth
+curl.exe -H "X-API-Key: <your-api-key>" http://127.0.0.1:18888/api/trading/asset
+curl.exe -H "X-API-Key: <your-api-key>" http://127.0.0.1:18888/api/trading/positions
+curl.exe -H "X-API-Key: <your-api-key>" http://127.0.0.1:18888/api/trading/orders
 ```
 
 ## 8. 下单模板
@@ -423,10 +421,10 @@ asyncio.run(
 | 批量下单 | POST | `/api/trading/batch_order` |
 | 批量撤单 | POST | `/api/trading/batch_cancel` |
 
-完整接口清单见本地 skill 参考：
+完整接口清单建议查看运行中的 Swagger：
 
 ```text
-C:\Users\lianghua\.codex\skills\qmt-bridge-api\references\api-reference.md
+http://127.0.0.1:18888/docs
 ```
 
 ## 11. 常见问题

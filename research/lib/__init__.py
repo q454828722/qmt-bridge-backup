@@ -18,11 +18,20 @@ from .research_client import (
     load_snapshot,
     write_diff_report,
 )
+from .qmt_gics4_industry import (
+    DEFAULT_QMT_GICS4_CACHE,
+    DEFAULT_QMT_GICS4_SUMMARY,
+    fetch_qmt_gics4_industry_map,
+    load_cached_qmt_gics4_industry_map,
+    write_qmt_gics4_industry_cache,
+)
 
 __all__ = [
     "AkshareResearchSource",
     "ComparisonReport",
     "DataDomain",
+    "DEFAULT_QMT_GICS4_CACHE",
+    "DEFAULT_QMT_GICS4_SUMMARY",
     "DomainPolicy",
     "FinancialDataset",
     "QMTResearchSource",
@@ -34,6 +43,9 @@ __all__ = [
     "TabularDataset",
     "TushareResearchSource",
     "diff_snapshots",
+    "fetch_qmt_gics4_industry_map",
     "load_snapshot",
+    "load_cached_qmt_gics4_industry_map",
+    "write_qmt_gics4_industry_cache",
     "write_diff_report",
 ]

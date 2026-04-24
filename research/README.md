@@ -13,6 +13,7 @@
 - `factors/`：因子定义、信号生成、截面处理代码
 - `strategies/`：策略原型、组合构建、回测入口
 - `lib/`：研究侧公共工具，不放服务端逻辑
+- `reference/`：可跟踪的研究参考文件，例如行业映射、公共股票池映射、研究基准配置
 
 建议的研究数据入口：
 
@@ -33,7 +34,7 @@
 推荐在 WSL 中使用：
 
 ```bash
-source /home/lianghua/.venvs/qmt-bridge-quant/bin/activate
+source "$HOME/.venvs/qmt-bridge-quant/bin/activate"
 jupyter lab
 ```
 

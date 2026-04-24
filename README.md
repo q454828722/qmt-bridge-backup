@@ -19,6 +19,13 @@ miniQMT / xtquant 只能在 Windows 上运行，且必须依赖 QMT 客户端保
 
 QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT 客户端 + 本项目的 API 服务；你的 Mac/Linux 通过局域网 HTTP/WebSocket 请求获取所有数据，也可以远程下单。核心代码、数据库、分析逻辑全部在你自己的主力机上运行。
 
+## Project Guides
+
+- `docs/windows-wsl-operations.md` — Windows 服务 + WSL 研究的运维说明
+- `docs/project-backup-and-architecture.md` — 公开备份范围、架构边界和隐私约束
+- `research/README.md` — WSL 研究工作区说明
+- `docs/local-strategy-api-guide.md` — 本地策略和 API 使用手册
+
 ## Features
 
 - **100+ REST API 端点** — 历史 K 线、实时行情、L2 逐笔、板块管理、财务数据、指数权重、期权链、可转债、ETF、港股通、期货主力合约等
