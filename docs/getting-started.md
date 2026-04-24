@@ -16,7 +16,7 @@
 ## 1. 安装
 
 ```bash
-git clone https://github.com/atompilot/starbridge-quant.git starbridge-quant
+git clone https://github.com/q454828722/starbridge-quant.git starbridge-quant
 cd starbridge-quant
 
 # 安装服务端（含 WebSocket 支持）

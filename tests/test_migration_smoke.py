@@ -75,8 +75,8 @@ def test_repo_metadata_uses_current_origin_and_new_entrypoints() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
 
     assert 'name = "starbridge-quant"' in pyproject
-    assert 'Homepage = "https://github.com/atompilot/starbridge-quant"' in pyproject
-    assert 'Repository = "https://github.com/atompilot/starbridge-quant"' in pyproject
+    assert 'Homepage = "https://github.com/q454828722/starbridge-quant"' in pyproject
+    assert 'Repository = "https://github.com/q454828722/starbridge-quant"' in pyproject
     assert 'starbridge-server = "starbridge_quant.server.cli:main"' in pyproject
     assert 'qmt-server = "starbridge_quant.server.cli:main"' in pyproject
     assert 'packages = ["src/starbridge_quant"]' in pyproject

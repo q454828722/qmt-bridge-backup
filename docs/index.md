@@ -34,7 +34,7 @@ Mac / Linux (主力机)                    Windows (中转站)
 ## 安装
 
 ```bash
-git clone https://github.com/atompilot/starbridge-quant.git starbridge-quant
+git clone https://github.com/q454828722/starbridge-quant.git starbridge-quant
 cd starbridge-quant
 
 # 安装服务端（含 WebSocket 支持）
@@ -49,4 +49,4 @@ pip install -e ".[client]"
 
 ## 许可
 
-[MIT](https://github.com/atompilot/starbridge-quant/blob/main/LICENSE)
+[MIT](https://github.com/q454828722/starbridge-quant/blob/main/LICENSE)

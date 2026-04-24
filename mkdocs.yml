@@ -1,6 +1,6 @@
 site_name: StarBridge Quant 文档
 site_description: miniQMT 行情与交易 HTTP/WebSocket 桥接
-repo_url: https://github.com/atompilot/starbridge-quant
+repo_url: https://github.com/q454828722/starbridge-quant
 
 theme:
   name: material

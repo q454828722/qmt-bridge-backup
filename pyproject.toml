@@ -62,8 +62,8 @@ qmt-server = "starbridge_quant.server.cli:main"
 qmt-scheduler = "starbridge_quant.server.cli:scheduler_main"
 
 [project.urls]
-Homepage = "https://github.com/atompilot/starbridge-quant"
-Repository = "https://github.com/atompilot/starbridge-quant"
+Homepage = "https://github.com/q454828722/starbridge-quant"
+Repository = "https://github.com/q454828722/starbridge-quant"
 
 [tool.hatch.version]
 path = "src/starbridge_quant/_version.py"
