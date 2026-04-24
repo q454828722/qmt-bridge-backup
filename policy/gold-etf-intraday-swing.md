@@ -1,18 +1,18 @@
 # 黄金ETF日内波段策略 · 实施方案
 
-> 518880 黄金ETF x 上期所AU期货价差回归 · 2万测试资金 · 基于 qmt-bridge 基建
+> 518880 黄金ETF x 上期所AU期货价差回归 · 2万测试资金 · 基于 starbridge-quant 基建
 
 ---
 
-## 一、基建评估：qmt-bridge 能力对照
+## 一、基建评估：starbridge-quant 能力对照
 
-### 结论：完全支持，qmt-bridge 不需要任何改动
+### 结论：完全支持，starbridge-quant 不需要任何改动
 
-策略所需的每一项数据和交易能力，qmt-bridge 都已覆盖。策略代码作为独立项目（`gold-etf-strategy/`），通过 `QMTClient` 远程调用即可。
+策略所需的每一项数据和交易能力，starbridge-quant 都已覆盖。策略代码作为独立项目（`gold-etf-strategy/`），通过 `QMTClient` 远程调用即可。
 
 ### 数据获取能力
 
-| 策略需求 | qmt-bridge 接口 | 备注 |
+| 策略需求 | starbridge-quant 接口 | 备注 |
 |---------|-----------------|------|
 | AU主力合约代码 | `client.get_main_contract("AU.SHFE")` | 返回当前主力合约如 `AU2506.SHFE` |
 | AU期货实时行情 | `client.subscribe_realtime(["AU2506.SHFE"], cb, period="tick")` | WebSocket `/ws/realtime`，tick 级推送 |
@@ -25,7 +25,7 @@
 
 ### 交易执行能力
 
-| 策略需求 | qmt-bridge 接口 | 备注 |
+| 策略需求 | starbridge-quant 接口 | 备注 |
 |---------|-----------------|------|
 | 限价买入/卖出 | `client.place_order(stock_code, order_type, volume, price_type=11, price=x)` | `order_type`: 23=买入, 24=卖出 |
 | 异步下单 | `client.place_order_async(...)` | 结果通过 `/ws/trade` 回调 |
@@ -38,7 +38,7 @@
 
 ### 辅助能力
 
-| 需求 | qmt-bridge 接口 | 备注 |
+| 需求 | starbridge-quant 接口 | 备注 |
 |------|-----------------|------|
 | 交易日历 | `client.get_trading_dates("SH", start_time, end_time)` | 判断是否交易日 |
 | 是否交易日 | `client.is_trading_date("SH", "20260211")` | 布尔返回 |
@@ -48,7 +48,7 @@
 
 ### 一个不影响的差异：条件单
 
-qmt-bridge 未封装 `order_stock_condition`（条件单）。但策略引擎自身实时监控价格并触发止损下单，日内不留仓，不需要服务端条件单。
+starbridge-quant 未封装 `order_stock_condition`（条件单）。但策略引擎自身实时监控价格并触发止损下单，日内不留仓，不需要服务端条件单。
 
 ---
 
@@ -116,7 +116,7 @@ qmt-bridge 未封装 `order_stock_condition`（条件单）。但策略引擎自
 │                                                     │
 ├──────────────── HTTP / WebSocket ────────────────────┤
 │                                                     │
-│                qmt-bridge（已有基建）                  │
+│                starbridge-quant（已有基建）                  │
 │       Windows QMT → xtquant 数据 + xttrader 交易     │
 └─────────────────────────────────────────────────────┘
 ```
@@ -932,15 +932,15 @@ Step 15  持续迭代（每周复盘、每月参数检查）
 ## 七、技术栈
 
 ```
-策略项目：Python（独立项目，pip install qmt-bridge 引入客户端）
+策略项目：Python（独立项目，pip install starbridge-quant 引入客户端）
 
-数据获取：qmt-bridge QMTClient
+数据获取：starbridge-quant QMTClient
   ├── subscribe_realtime → 实时行情（WebSocket）
   ├── get_history_ex → 历史K线（REST）
   ├── get_market_snapshot → 实时快照（REST）
   └── get_main_contract → 主力合约查询（REST）
 
-交易执行：qmt-bridge QMTClient
+交易执行：starbridge-quant QMTClient
   ├── place_order / place_order_async → 下单
   ├── cancel_order → 撤单
   ├── query_positions / query_asset → 查询
@@ -962,7 +962,7 @@ Step 15  持续迭代（每周复盘、每月参数检查）
   ├── plotly → 交互式图表（悬浮、缩放、框选）
   └── streamlit-autorefresh → 盘中自动刷新
 
-跨平台：qmt-bridge (已有) → Mac ↔ Windows QMT
+跨平台：starbridge-quant (已有) → Mac ↔ Windows QMT
 ```
 
 ---
@@ -971,7 +971,7 @@ Step 15  持续迭代（每周复盘、每月参数检查）
 
 ```
 gold-etf-strategy/
-├── pyproject.toml             # 依赖：qmt-bridge, pandas, numpy
+├── pyproject.toml             # 依赖：starbridge-quant, pandas, numpy
 ├── config.py                  # 运行模式、QMT连接信息、策略参数
 ├── main.py                    # 启动入口（--mode simulated/live）
 │
@@ -1022,12 +1022,12 @@ gold-etf-strategy/
 
 ---
 
-## 九、qmt-bridge 关键接口速查
+## 九、starbridge-quant 关键接口速查
 
 策略开发中最常用的 QMTClient 调用汇总：
 
 ```python
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 client = QMTClient("192.168.x.x", port=8000, api_key="xxx")
 
@@ -1095,4 +1095,4 @@ client.get_batch_instrument_detail(["AU2506.SHFE", "518880.SH"])
 
 这一步完成后，就能判断后面还值不值得继续做。
 
-**qmt-bridge 本身不需要任何修改。**
+**starbridge-quant 本身不需要任何修改。**

@@ -1,6 +1,6 @@
 # StarBridge Quant
 
-> 当前对外显示名为 **StarBridge Quant**。项目代号、包名和 import 路径暂时仍保持为 `qmt-bridge`，这样不会打断现有脚本、CLI 和研究环境。
+> 当前对外显示名为 **StarBridge Quant**。分发名为 `starbridge-quant`，Python import 路径为 `starbridge_quant`；旧的 `qmt-*` CLI 入口仍保留兼容。
 
 **StarBridge Quant** bridges miniQMT/xtquant on Windows with a WSL-first quant research workflow on Linux. It exposes market data and trading as standard HTTP/WebSocket endpoints, while keeping factor research, snapshots, diff audit, and strategy prototyping on your main machine.
 
@@ -8,7 +8,7 @@
 Mac / Linux (主力机)                    Windows (中转站)
 ┌──────────────────────┐                ┌─────────────────────────┐
 │  你的分析 / 交易代码    │   HTTP/WS     │  miniQMT 客户端 (登录中)  │
-│  本地数据库            │ ◄───────────► │  QMT Bridge (FastAPI)    │
+│  本地数据库            │ ◄───────────► │  StarBridge Quant (FastAPI)    │
 │  可视化仪表盘          │   局域网       │  xtquant                 │
 └──────────────────────┘                └─────────────────────────┘
 ```
@@ -17,7 +17,7 @@ Mac / Linux (主力机)                    Windows (中转站)
 
 miniQMT / xtquant 只能在 Windows 上运行，且必须依赖 QMT 客户端保持登录。如果你的主力开发机是 Mac 或 Linux，就无法直接调用 xtquant。
 
-QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT 客户端 + 本项目的 API 服务；你的 Mac/Linux 通过局域网 HTTP/WebSocket 请求获取所有数据，也可以远程下单。核心代码、数据库、分析逻辑全部在你自己的主力机上运行。
+StarBridge Quant 解决这个问题：Windows 电脑作为数据中转站，运行 QMT 客户端 + 本项目的 API 服务；你的 Mac/Linux 通过局域网 HTTP/WebSocket 请求获取所有数据，也可以远程下单。核心代码、数据库、分析逻辑全部在你自己的主力机上运行。
 
 ## Quick Links
 
@@ -29,7 +29,7 @@ QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT
 
 ## Repo Layout
 
-- **Windows side** — `miniQMT`、`qmt-server`、缓存下载与健康检查
+- **Windows side** — `miniQMT`、`starbridge-server`、缓存下载与健康检查
 - **WSL side** — 因子研究、策略原型、Jupyter、snapshot / diff 审计
 - **Shared codebase** — API client、server routers、研究工具库、子代理定义
 
@@ -53,15 +53,15 @@ QMT Bridge 解决这个问题：Windows 电脑作为数据中转站，运行 QMT
 ### 网络
 
 - Windows 和你的主力机在同一局域网下（连同一个路由器 / WiFi）
-- Windows 防火墙放行本项目使用的端口（默认 8000）
+- Windows 防火墙放行本项目使用的端口（仓库提供的 `.env.example` 默认为 `18888`）
 
 ## Quick Start
 
 ### 1. 安装
 
 ```bash
-git clone <repo-url> qmt-bridge
-cd qmt-bridge
+git clone https://github.com/atompilot/starbridge-quant.git starbridge-quant
+cd starbridge-quant
 
 # 安装服务端（含 WebSocket 支持）
 pip install -e ".[full]"
@@ -95,27 +95,24 @@ cp .env.example .env
 
 ```bash
 # 使用 CLI 命令（推荐）
-qmt-server
+starbridge-server
 
 # 自定义参数
-qmt-server --port 8080 --log-level debug
+starbridge-server --port 8080 --log-level debug
 
 # 启用交易模块
-qmt-server --trading --api-key your-secret-key --mini-qmt-path "C:\国金QMT交易端\userdata_mini" --account-id 12345678
+starbridge-server --trading --api-key your-secret-key --mini-qmt-path "C:\国金QMT交易端\userdata_mini" --account-id 12345678
 ```
 
 也可以使用脚本：
 
 ```bash
-# 前台运行（Ctrl+C 停止）
-bash scripts/start.sh
+# Windows PowerShell
+scripts\start-starbridge-quant.ps1
 
-# 后台运行
-bash scripts/start-nohup.sh
-bash scripts/stop.sh
-
-# Windows
+# Windows CMD
 scripts\start.bat
+scripts\start-nohup.bat
 scripts\stop.bat
 ```
 
@@ -124,13 +121,13 @@ scripts\stop.bat
 在你的 Mac/Linux 浏览器中访问：
 
 ```
-http://<Windows局域网IP>:8000/docs
+http://<Windows局域网IP>:18888/docs
 ```
 
 看到 Swagger 文档页面即表示服务正常。也可以用 curl 检查：
 
 ```bash
-curl http://<Windows局域网IP>:8000/api/meta/health
+curl http://<Windows局域网IP>:18888/api/meta/health
 ```
 
 ## Configuration
@@ -139,15 +136,15 @@ curl http://<Windows局域网IP>:8000/api/meta/health
 
 | 环境变量 | CLI 参数 | 默认值 | 说明 |
 |---------|---------|-------|------|
-| `QMT_BRIDGE_HOST` | `--host` | `0.0.0.0` | 监听地址（`0.0.0.0` = 允许局域网访问） |
-| `QMT_BRIDGE_PORT` | `--port` | `8000` | 监听端口 |
-| `QMT_BRIDGE_LOG_LEVEL` | `--log-level` | `info` | 日志级别：critical / error / warning / info / debug |
-| `QMT_BRIDGE_WORKERS` | `--workers` | `1` | Worker 数量（Windows 下建议保持 1） |
-| `QMT_BRIDGE_API_KEY` | `--api-key` | _(空)_ | API Key，用于保护交易端点 |
-| `QMT_BRIDGE_REQUIRE_AUTH_FOR_DATA` | — | `false` | 数据端点是否也要求认证 |
-| `QMT_BRIDGE_TRADING_ENABLED` | `--trading` | `false` | 是否启用交易模块 |
-| `QMT_BRIDGE_MINI_QMT_PATH` | `--mini-qmt-path` | _(空)_ | miniQMT 安装路径（交易模块需要） |
-| `QMT_BRIDGE_TRADING_ACCOUNT_ID` | `--account-id` | _(空)_ | 交易账户 ID |
+| `STARBRIDGE_HOST` | `--host` | `0.0.0.0` | 监听地址（`0.0.0.0` = 允许局域网访问） |
+| `STARBRIDGE_PORT` | `--port` | `8000`（代码默认） / `18888`（`.env.example`） | 监听端口 |
+| `STARBRIDGE_LOG_LEVEL` | `--log-level` | `info` | 日志级别：critical / error / warning / info / debug |
+| `STARBRIDGE_WORKERS` | `--workers` | `1` | Worker 数量（Windows 下建议保持 1） |
+| `STARBRIDGE_API_KEY` | `--api-key` | _(空)_ | API Key，用于保护交易端点 |
+| `STARBRIDGE_REQUIRE_AUTH_FOR_DATA` | — | `false` | 数据端点是否也要求认证 |
+| `STARBRIDGE_TRADING_ENABLED` | `--trading` | `false` | 是否启用交易模块 |
+| `STARBRIDGE_MINI_QMT_PATH` | `--mini-qmt-path` | _(空)_ | miniQMT 安装路径（交易模块需要） |
+| `STARBRIDGE_TRADING_ACCOUNT_ID` | `--account-id` | _(空)_ | 交易账户 ID |
 
 ## Auto Pre-download（自动预下载）
 
@@ -394,7 +391,7 @@ WebSocket 连接后发送 JSON 订阅请求：
 
 ```python
 import asyncio
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 client = QMTClient(host="192.168.1.100")
 
@@ -421,9 +418,9 @@ asyncio.run(client.subscribe_realtime(
 ### 基本用法
 
 ```python
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
-client = QMTClient(host="192.168.1.100", port=8000)
+client = QMTClient(host="192.168.1.100", port=18888)
 
 # 历史 K 线
 df = client.get_history("000001.SZ", period="1d", count=60)
@@ -502,45 +499,45 @@ asyncio.run(client.subscribe_whole_quote(
 
 ```bash
 # 健康检查
-curl http://192.168.1.100:8000/api/meta/health
+curl http://192.168.1.100:18888/api/meta/health
 
 # 平安银行最近 60 根日线
-curl "http://192.168.1.100:8000/api/history?stock=000001.SZ&period=1d&count=60"
+curl "http://192.168.1.100:18888/api/history?stock=000001.SZ&period=1d&count=60"
 
 # 增强版 K 线，前复权
-curl "http://192.168.1.100:8000/api/market/market_data_ex?stocks=000001.SZ&period=1d&count=5&dividend_type=front"
+curl "http://192.168.1.100:18888/api/market/market_data_ex?stocks=000001.SZ&period=1d&count=5&dividend_type=front"
 
 # 大盘行情
-curl http://192.168.1.100:8000/api/market/indices
+curl http://192.168.1.100:18888/api/market/indices
 
 # 个股 / 指数快照
-curl "http://192.168.1.100:8000/api/market/full_tick?stocks=000001.SH,000001.SZ"
+curl "http://192.168.1.100:18888/api/market/full_tick?stocks=000001.SH,000001.SZ"
 
 # 板块列表
-curl http://192.168.1.100:8000/api/sector/list
+curl http://192.168.1.100:18888/api/sector/list
 
 # 沪深 A 股成分股
-curl "http://192.168.1.100:8000/api/sector/stocks?sector=沪深A股"
+curl "http://192.168.1.100:18888/api/sector/stocks?sector=沪深A股"
 
 # ETF 代码列表
-curl http://192.168.1.100:8000/api/etf/list
+curl http://192.168.1.100:18888/api/etf/list
 
 # 交易日列表
-curl "http://192.168.1.100:8000/api/calendar/trading_dates?market=SH"
+curl "http://192.168.1.100:18888/api/calendar/trading_dates?market=SH"
 
 # 指数成分股权重
-curl "http://192.168.1.100:8000/api/instrument/index_weight?index_code=000300.SH"
+curl "http://192.168.1.100:18888/api/instrument/index_weight?index_code=000300.SH"
 
 # 财务数据
-curl "http://192.168.1.100:8000/api/financial/data?stocks=000001.SZ&tables=Balance"
+curl "http://192.168.1.100:18888/api/financial/data?stocks=000001.SZ&tables=Balance"
 
 # 批量下载历史数据
-curl -X POST http://192.168.1.100:8000/api/download/history_data2 \
+curl -X POST http://192.168.1.100:18888/api/download/history_data2 \
   -H "Content-Type: application/json" \
   -d '{"stocks": ["000001.SZ", "600519.SH"], "period": "1d"}'
 
 # 下单（需要 API Key）
-curl -X POST http://192.168.1.100:8000/api/trading/order \
+curl -X POST http://192.168.1.100:18888/api/trading/order \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-secret-key" \
   -d '{"stock_code": "000001.SZ", "order_type": 23, "order_volume": 100}'
@@ -549,18 +546,19 @@ curl -X POST http://192.168.1.100:8000/api/trading/order \
 ## Project Structure
 
 ```
-qmt-bridge/
+starbridge-quant/
 ├── pyproject.toml                  # 项目元数据与依赖
 ├── .env.example                    # 配置模板
 ├── scripts/                        # 启动 / 停止脚本
-│   ├── start.sh / start.bat        # 前台启动
-│   ├── start-nohup.sh              # 后台启动
-│   └── stop.sh / stop.bat          # 停止服务
-├── src/qmt_bridge/
+│   ├── start-starbridge-quant.ps1  # Windows PowerShell 前台启动
+│   ├── start.bat                   # Windows CMD 前台启动
+│   ├── start-nohup.bat             # Windows CMD 后台启动
+│   └── stop.bat                    # Windows 停止服务
+├── src/starbridge_quant/
 │   ├── _version.py                 # 版本号
 │   ├── server/                     # FastAPI 服务端
 │   │   ├── app.py                  # 应用工厂 & 生命周期管理
-│   │   ├── cli.py                  # qmt-server CLI 入口
+│   │   ├── cli.py                  # starbridge-server CLI 入口
 │   │   ├── config.py               # 配置加载
 │   │   ├── security.py             # API Key 认证
 │   │   ├── scheduler.py            # 后台数据预下载调度
@@ -582,10 +580,10 @@ qmt-bridge/
 
 ## Authentication
 
-QMT Bridge 支持可选的 API Key 认证机制：
+StarBridge Quant 支持可选的 API Key 认证机制：
 
 - **交易端点** (`/api/trading/*`, `/api/credit/*`, `/api/fund/*`, `/api/bank/*`) — 设置了 `API_KEY` 时强制认证
-- **数据端点** — 默认无需认证，可通过 `QMT_BRIDGE_REQUIRE_AUTH_FOR_DATA=true` 开启
+- **数据端点** — 默认无需认证，可通过 `STARBRIDGE_REQUIRE_AUTH_FOR_DATA=true` 开启
 - **认证方式** — HTTP Header `X-API-Key: your-secret-key`
 
 ## Security Notice
@@ -612,7 +610,7 @@ v2.0 起支持。启用交易模块后 (`--trading`)，可通过 `/api/trading/*
 
 **Q: 客户端需要安装什么依赖吗？**
 
-基础客户端 (HTTP) 零依赖，仅使用 Python 标准库。如需 WebSocket 订阅功能，安装 `pip install qmt-bridge[client]` 即可。如安装了 pandas，返回结果会自动转为 DataFrame。
+基础客户端 (HTTP) 零依赖，仅使用 Python 标准库。如需 WebSocket 订阅功能，安装 `pip install starbridge-quant[client]` 即可。如安装了 pandas，返回结果会自动转为 DataFrame。
 
 ## License
 

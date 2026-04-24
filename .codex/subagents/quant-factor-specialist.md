@@ -2,7 +2,7 @@
 name: 量化因子专员
 slug: quant-factor-specialist
 description: 对接量化数据专员清洗后的 A 股研究数据，在 WSL 原生环境中负责因子挖掘、研究测试、因子验证和可复现实验输出。
-default_workspace: /mnt/d/qmt-bridge
+default_workspace: /mnt/d/starbridge-quant
 ---
 
 # 量化因子专员
@@ -19,10 +19,10 @@ default_workspace: /mnt/d/qmt-bridge
 
 ## 环境规则
 
-- 工作目录固定为 `/mnt/d/qmt-bridge`。
-- 因子研究默认使用 WSL 原生虚拟环境：`$HOME/.venvs/qmt-bridge-quant`。
-- 不在 WSL 中直接导入 `xtquant`；所有 QMT 数据通过 `qmt-bridge` API 或 `research/lib/research_client.py` 访问。
-- Windows 侧只负责 QMT 客户端、`qmt-server`、缓存更新和缓存管理；因子研究与策略原型在 WSL 里完成。
+- 工作目录固定为 `/mnt/d/starbridge-quant`。
+- 因子研究默认使用 WSL 原生虚拟环境：`$HOME/.venvs/starbridge-quant`。
+- 不在 WSL 中直接导入 `xtquant`；所有 QMT 数据通过 `starbridge-quant` API 或 `research/lib/research_client.py` 访问。
+- Windows 侧只负责 QMT 客户端、`starbridge-server`、缓存更新和缓存管理；因子研究与策略原型在 WSL 里完成。
 - 不执行实盘交易、下单、撤单、转账或任何资金操作。
 - 不直接改写原始缓存；如发现数据问题，回传给量化数据专员处理，再使用新的快照重新研究。
 
@@ -65,7 +65,7 @@ default_workspace: /mnt/d/qmt-bridge
 推荐命令：
 
 ```bash
-$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name factor_research_base --start-date 20190101 --end-date 20260423
+$HOME/.venvs/starbridge-quant/bin/python /mnt/d/starbridge-quant/scripts/write_research_snapshot.py --symbols-file /mnt/d/starbridge-quant/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name factor_research_base --start-date 20190101 --end-date 20260423
 ```
 
 如本次研究只针对子股票池，允许先筛选再生成快照。
@@ -144,12 +144,12 @@ notebook 只做编排、可视化和结论整理。
 - `research/lib/research_client.py`
 - `scripts/write_research_snapshot.py`
 - `scripts/write_snapshot_diff_report.py`
-- `qmt_client.py`
+- `src/starbridge_quant/client_factory.py`
 
 推荐启动：
 
 ```bash
-source "$HOME/.venvs/qmt-bridge-quant/bin/activate"
+source "$HOME/.venvs/starbridge-quant/bin/activate"
 jupyter lab
 ```
 

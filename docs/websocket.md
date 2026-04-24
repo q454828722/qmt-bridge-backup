@@ -1,6 +1,6 @@
 # WebSocket 使用指南
 
-QMT Bridge 提供 5 个 WebSocket 端点，用于实时数据推送。
+StarBridge Quant 提供 5 个 WebSocket 端点，用于实时数据推送。
 
 ## 端点列表
 
@@ -26,7 +26,7 @@ QMT Bridge 提供 5 个 WebSocket 端点，用于实时数据推送。
 
 ```python
 import asyncio
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 client = QMTClient(host="192.168.1.100")
 
@@ -114,7 +114,7 @@ asyncio.run(client.subscribe_l2_thousand(
 ## 交易回报 `/ws/trade`
 
 !!! note "需要认证"
-    交易回报 WebSocket 需要通过查询参数传递 API Key：`ws://<host>:8000/ws/trade?api_key=your-secret-key`
+    交易回报 WebSocket 需要通过查询参数传递 API Key：`ws://<host>:18888/ws/trade?api_key=your-secret-key`
 
 推送交易事件（委托回报、成交回报、错误信息等）。
 
@@ -132,7 +132,7 @@ asyncio.run(client.subscribe_trade_events(callback=on_trade_event))
 ## JavaScript / 浏览器使用
 
 ```javascript
-const ws = new WebSocket("ws://192.168.1.100:8000/ws/realtime");
+const ws = new WebSocket("ws://192.168.1.100:18888/ws/realtime");
 
 ws.onopen = () => {
     ws.send(JSON.stringify({

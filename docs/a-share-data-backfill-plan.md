@@ -42,7 +42,7 @@
 先用全 A 板块的前 20 只标的测试财务和近三年日线。测试命令与全 A 命令使用同一个脚本，只多一个 `--limit 20`。
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --limit 20 --periods 1d --tables Balance,Income,CashFlow --since 2024 --batch-size 10 --timeout 300 --delay 2.0 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --limit 20 --periods 1d --tables Balance,Income,CashFlow --since 2024 --batch-size 10 --timeout 300 --delay 2.0 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
 ```
 
 测试通过标准：
@@ -70,13 +70,13 @@ curl.exe -X POST http://127.0.0.1:18888/api/download/history_contracts
 保守命令：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 10 --timeout 300 --delay 2.0 --max-retries 2
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 10 --timeout 300 --delay 2.0 --max-retries 2
 ```
 
 稳定后提速：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --max-retries 2
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --max-retries 2
 ```
 
 验收口径：
@@ -92,19 +92,19 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --s
 最近三年：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2024 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2024 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
 ```
 
 后续若确实需要更长历史，再扩展到 2020：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2020 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2020 --kline-delay 0.20 --kline-timeout 15 --max-retries 1
 ```
 
 更长历史可在以上稳定后再执行：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2015 --kline-delay 0.30 --kline-timeout 15 --max-retries 1
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --since 2015 --kline-delay 0.30 --kline-timeout 15 --max-retries 1
 ```
 
 验收口径：
@@ -122,13 +122,13 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --s
 标准检查：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\check_cache_progress.py --periods 1d --tables Balance,Income,CashFlow
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\check_cache_progress.py --periods 1d --tables Balance,Income,CashFlow
 ```
 
 带年度覆盖率检查：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\check_cache_progress.py --periods 1d --tables Balance,Income,CashFlow --year-from 2024
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\check_cache_progress.py --periods 1d --tables Balance,Income,CashFlow --year-from 2024
 ```
 
 输出文件：
@@ -142,18 +142,18 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\check_cache_progres
 收盘后增量：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --kline-delay 0.20 --kline-timeout 15 --max-retries 1
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --periods 1d --skip-financial --kline-delay 0.20 --kline-timeout 15 --max-retries 1
 ```
 
 每周或财报季后补财务：
 
 ```powershell
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --max-retries 2
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --skip-kline --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --max-retries 2
 ```
 
 ## 异常处理
 
 - 失败率高于 3%：停止提速，重跑同一阶段；若仍失败，将 `--kline-delay` 翻倍。
 - 财务批次超时：把 `--batch-size` 从 20 降到 10，`--timeout` 提到 600。
-- QMT 连接断开：先确认 miniQMT 仍登录，再重启 qmt-bridge 服务。
+- QMT 连接断开：先确认 miniQMT 仍登录，再重启 starbridge-quant 服务。
 - 磁盘低于 80 GiB：继续暂停分钟线，只保留财务和日线增量。

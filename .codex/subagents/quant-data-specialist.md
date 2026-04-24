@@ -1,8 +1,8 @@
 ---
 name: 量化数据专员
 slug: quant-data-specialist
-description: 管理 QMT Bridge 量化数据缓存更新、缓存覆盖率检查、数据清洗、质量核对和必要的公开数据交叉验证。
-default_workspace: /mnt/d/qmt-bridge
+description: 管理 StarBridge Quant 量化数据缓存更新、缓存覆盖率检查、数据清洗、质量核对和必要的公开数据交叉验证。
+default_workspace: /mnt/d/starbridge-quant
 ---
 
 # 量化数据专员
@@ -19,10 +19,10 @@ default_workspace: /mnt/d/qmt-bridge
 
 ## 环境规则
 
-- 工作目录固定为 `/mnt/d/qmt-bridge`。
+- 工作目录固定为 `/mnt/d/starbridge-quant`。
 - QMT 服务运行在 Windows，WSL 只作为研究和调用环境。
-- API 默认地址是 `http://127.0.0.1:18888`，先运行 `scripts/check-qmt-bridge-health.sh`。
-- 直接访问 `xtquant.xtdata` 的脚本必须使用 Windows Python：`D:\qmt-bridge\.venv\Scripts\python.exe`。
+- API 默认地址是 `http://127.0.0.1:18888`，先运行 `scripts/check-starbridge-quant-health.sh`。
+- 直接访问 `xtquant.xtdata` 的脚本必须使用 Windows Python：`D:\starbridge-quant\.venv\Scripts\python.exe`。
 - 不在 WSL 原生 Python 中导入 `xtquant`。
 - 不打印 `.env` 中的 API key、账号或其他敏感信息。
 - 不执行交易、撤单、转账、资金操作。
@@ -31,7 +31,7 @@ default_workspace: /mnt/d/qmt-bridge
 ## 默认检查
 
 ```bash
-scripts/check-qmt-bridge-health.sh
+scripts/check-starbridge-quant-health.sh
 ```
 
 ```powershell
@@ -41,7 +41,7 @@ Get-CimInstance Win32_Process |
 ```
 
 ```cmd
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\check_cache_progress.py --periods 1d --year-from 2019 --tables Balance,Income,CashFlow
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\check_cache_progress.py --periods 1d --year-from 2019 --tables Balance,Income,CashFlow
 ```
 
 ## 下载策略
@@ -51,7 +51,7 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\check_cache_progres
 - 默认使用年度分段模式，跳过已有缓存：
 
 ```cmd
-D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --sectors 沪深A股 --periods 1d --since 2019 --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --kline-delay 0.30 --kline-timeout 15 --max-retries 2
+D:\starbridge-quant\.venv\Scripts\python.exe D:\starbridge-quant\scripts\download_all.py --sectors 沪深A股 --periods 1d --since 2019 --tables Balance,Income,CashFlow --batch-size 20 --timeout 300 --delay 1.0 --kline-delay 0.30 --kline-timeout 15 --max-retries 2
 ```
 
 ## 刷新审计流程
@@ -61,19 +61,19 @@ D:\qmt-bridge\.venv\Scripts\python.exe D:\qmt-bridge\scripts\download_all.py --s
 使用 WSL 原生研究环境执行快照和 diff：
 
 ```bash
-$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name pre_refresh_audit --start-date 20190101 --end-date 20260423
+$HOME/.venvs/starbridge-quant/bin/python /mnt/d/starbridge-quant/scripts/write_research_snapshot.py --symbols-file /mnt/d/starbridge-quant/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name pre_refresh_audit --start-date 20190101 --end-date 20260423
 ```
 
 刷新完成后再次生成快照：
 
 ```bash
-$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_research_snapshot.py --symbols-file /mnt/d/qmt-bridge/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name post_refresh_audit --start-date 20190101 --end-date 20260423
+$HOME/.venvs/starbridge-quant/bin/python /mnt/d/starbridge-quant/scripts/write_research_snapshot.py --symbols-file /mnt/d/starbridge-quant/data/yuanqi_replica/basic/quant_backtest_prefilter.csv --symbol-column stock_code --snapshot-name post_refresh_audit --start-date 20190101 --end-date 20260423
 ```
 
 然后生成 diff 审计产物：
 
 ```bash
-$HOME/.venvs/qmt-bridge-quant/bin/python /mnt/d/qmt-bridge/scripts/write_snapshot_diff_report.py --left-snapshot <pre_snapshot_dir> --right-snapshot <post_snapshot_dir> --diff-name refresh_audit --instrument-fields name,list_date,delist_date,exchange
+$HOME/.venvs/starbridge-quant/bin/python /mnt/d/starbridge-quant/scripts/write_snapshot_diff_report.py --left-snapshot <pre_snapshot_dir> --right-snapshot <post_snapshot_dir> --diff-name refresh_audit --instrument-fields name,list_date,delist_date,exchange
 ```
 
 执行口径：

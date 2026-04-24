@@ -4,7 +4,7 @@
 
 ## 项目概览
 
-QMT Bridge：将 miniQMT (xtquant) 的行情与交易能力通过 HTTP/WebSocket 暴露给局域网设备。
+StarBridge Quant：将 miniQMT (xtquant) 的行情与交易能力通过 HTTP/WebSocket 暴露给局域网设备。
 
 - **语言**: Python 3.10+
 - **构建**: hatchling (pyproject.toml)
@@ -14,7 +14,7 @@ QMT Bridge：将 miniQMT (xtquant) 的行情与交易能力通过 HTTP/WebSocket
 ## 目录结构
 
 ```
-src/qmt_bridge/
+src/starbridge_quant/
   server/          # FastAPI 服务端 (routers/, ws/, trading/)
   client/          # Python 客户端 (Mixin 模式)
   _version.py      # 单一版本源
@@ -65,7 +65,7 @@ just build                # 构建 wheel
 
 ### 版本号
 
-- 单一版本源: `src/qmt_bridge/_version.py`
+- 单一版本源: `src/starbridge_quant/_version.py`
 - hatch 自动读取，发布前手动更新
 
 ## 已知问题与排障手册
@@ -83,7 +83,7 @@ just build                # 构建 wheel
 
 **排查记录（2026-02-15）**：
 1. 最初误判为线程并发问题，添加了 `asyncio.Lock` 串行化依赖（保留，有防护价值）
-2. 将定时下载调度器拆分为独立进程 `qmt-scheduler`（保留，架构更合理）
+2. 将定时下载调度器拆分为独立进程 `starbridge-scheduler`（保留，架构更合理）
 3. 经诊断脚本 `scripts/diagnose_bson.py` 确认只有 `get_local_data` / `get_market_data_ex` 崩溃
 4. 经 `scripts/find_bad_cache.py` 排除了所有磁盘文件（datadir、共享内存、IPC 队列）
 5. 最终确认重启 QMT 后问题消失，属于 QMT 服务端内存状态损坏

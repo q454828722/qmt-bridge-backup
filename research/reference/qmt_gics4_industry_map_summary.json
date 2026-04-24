@@ -29,8 +29,8 @@
   ],
   "missing_symbol_count": 0,
   "missing_symbol_examples": [],
-  "generated_at": "2026-04-24T13:22:34+08:00",
-  "output_path": "/mnt/d/qmt-bridge/research/reference/qmt_gics4_industry_map.csv",
-  "summary_path": "/mnt/d/qmt-bridge/research/reference/qmt_gics4_industry_map_summary.json",
+  "generated_at": "2026-04-24T16:04:20+08:00",
+  "output_path": "/mnt/d/starbridge-quant/research/reference/qmt_gics4_industry_map.csv",
+  "summary_path": "/mnt/d/starbridge-quant/research/reference/qmt_gics4_industry_map_summary.json",
   "record_count": 8511
 }

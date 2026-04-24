@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from research.lib.qmt_gics4_industry import (
+from research.lib.starbridge_gics4_industry import (
     DEFAULT_QMT_GICS4_CACHE,
     fetch_qmt_gics4_industry_map,
     load_cached_qmt_gics4_industry_map,
@@ -30,7 +30,7 @@ DEFAULT_SNAPSHOT = Path(
     "research/output/snapshots/20260424_105437_post_refresh_audit_20260424_105123"
 )
 DEFAULT_OUTPUT_ROOT = Path("research/output/factor_tests")
-DEFAULT_TUSHARE_CACHE = Path.home() / ".cache" / "qmt-bridge" / "tushare_stock_basic_L.csv"
+DEFAULT_TUSHARE_CACHE = Path.home() / ".cache" / "starbridge-quant" / "tushare_stock_basic_L.csv"
 
 
 @dataclass

@@ -9,7 +9,7 @@
 client = QMTClient(host="192.168.1.100", api_key="your-secret-key")
 ```
 
-::: qmt_bridge.client.trading.TradingMixin
+::: starbridge_quant.client.trading.TradingMixin
     options:
       show_root_heading: false
       heading_level: 2

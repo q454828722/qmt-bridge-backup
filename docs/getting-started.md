@@ -11,13 +11,13 @@
 ### 网络
 
 - Windows 和你的主力机在同一局域网下（连同一个路由器 / WiFi）
-- Windows 防火墙放行本项目使用的端口（默认 8000）
+- Windows 防火墙放行本项目使用的端口（仓库提供的 `.env.example` 默认为 `18888`）
 
 ## 1. 安装
 
 ```bash
-git clone https://github.com/qmt-bridge/qmt-bridge.git
-cd qmt-bridge
+git clone https://github.com/atompilot/starbridge-quant.git starbridge-quant
+cd starbridge-quant
 
 # 安装服务端（含 WebSocket 支持）
 pip install -e ".[full]"
@@ -53,13 +53,13 @@ cp .env.example .env
 
 ```bash
 # 使用 CLI 命令（推荐）
-qmt-server
+starbridge-server
 
 # 自定义参数
-qmt-server --port 8080 --log-level debug
+starbridge-server --port 8080 --log-level debug
 
 # 启用交易模块
-qmt-server --trading --api-key your-secret-key \
+starbridge-server --trading --api-key your-secret-key \
     --mini-qmt-path "C:\国金QMT交易端\userdata_mini" \
     --account-id 12345678
 ```
@@ -67,15 +67,12 @@ qmt-server --trading --api-key your-secret-key \
 也可以使用脚本：
 
 ```bash
-# 前台运行（Ctrl+C 停止）
-bash scripts/start.sh
+# Windows PowerShell
+scripts\start-starbridge-quant.ps1
 
-# 后台运行
-bash scripts/start-nohup.sh
-bash scripts/stop.sh
-
-# Windows
+# Windows CMD
 scripts\start.bat
+scripts\start-nohup.bat
 scripts\stop.bat
 ```
 
@@ -84,21 +81,21 @@ scripts\stop.bat
 在你的 Mac/Linux 浏览器中访问：
 
 ```
-http://<Windows局域网IP>:8000/docs
+http://<Windows局域网IP>:18888/docs
 ```
 
 看到 Swagger 文档页面即表示服务正常。也可以用 curl 检查：
 
 ```bash
-curl http://<Windows局域网IP>:8000/api/meta/health
+curl http://<Windows局域网IP>:18888/api/meta/health
 ```
 
 ## Python 客户端用法
 
 ```python
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
-client = QMTClient(host="192.168.1.100", port=8000)
+client = QMTClient(host="192.168.1.100", port=18888)
 
 # 历史 K 线
 df = client.get_history("000001.SZ", period="1d", count=60)

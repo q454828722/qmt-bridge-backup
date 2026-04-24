@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -u
 
-PORT="${QMT_BRIDGE_PORT:-18888}"
-HOST="${QMT_BRIDGE_CLIENT_HOST:-127.0.0.1}"
-TASK_NAME="${QMT_BRIDGE_WINDOWS_TASK_NAME:-QMT Bridge Server}"
-FORWARD_SERVICE="${QMT_BRIDGE_FORWARD_SERVICE:-qmt-bridge-forward.service}"
-TIMEOUT_SECONDS="${QMT_BRIDGE_HEALTH_TIMEOUT:-5}"
+PORT="${STARBRIDGE_PORT:-${QMT_BRIDGE_PORT:-18888}}"
+HOST="${STARBRIDGE_CLIENT_HOST:-${QMT_BRIDGE_CLIENT_HOST:-127.0.0.1}}"
+TASK_NAME="${STARBRIDGE_WINDOWS_TASK_NAME:-${QMT_BRIDGE_WINDOWS_TASK_NAME:-StarBridge Quant Server}}"
+FORWARD_SERVICE="${STARBRIDGE_FORWARD_SERVICE:-${QMT_BRIDGE_FORWARD_SERVICE:-starbridge-quant-forward.service}}"
+TIMEOUT_SECONDS="${STARBRIDGE_HEALTH_TIMEOUT:-${QMT_BRIDGE_HEALTH_TIMEOUT:-5}}"
 
 overall=0
 
@@ -44,9 +44,9 @@ check_windows_server() {
     if command -v wslpath >/dev/null 2>&1; then
         windows_root="$(wslpath -w "$project_root")"
     else
-        windows_root="D:\\qmt-bridge"
+        windows_root="D:\\starbridge-quant"
     fi
-    windows_check_script="${windows_root}\\scripts\\check-qmt-bridge-windows.ps1"
+    windows_check_script="${windows_root}\\scripts\\check-starbridge-quant-windows.ps1"
 
     output="$(powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$windows_check_script" -ProjectRoot "$windows_root" -Port "$PORT" -TaskName "$TASK_NAME" -TimeoutSeconds "$TIMEOUT_SECONDS" -SkipApiHealth 2>&1)"
     code=$?
@@ -54,13 +54,13 @@ check_windows_server() {
     printf '%s\n' "$output" | sed 's/\r$//'
     case "$code" in
         0)
-            status_line "PASS" "Windows qmt-server listener and scheduled task look healthy"
+            status_line "PASS" "Windows starbridge-server listener and scheduled task look healthy"
             ;;
         1)
-            status_line "WARN" "Windows qmt-server is listening, but scheduled task metadata needs attention"
+            status_line "WARN" "Windows starbridge-server is listening, but scheduled task metadata needs attention"
             ;;
         *)
-            status_line "FAIL" "Windows qmt-server listener was not found"
+            status_line "FAIL" "Windows starbridge-server listener was not found"
             ;;
     esac
     set_result "$code"
@@ -112,15 +112,15 @@ check_api_health() {
     printf 'response: %s\n' "$output"
 
     if [[ "$code" -eq 0 && "$output" == *'"status":"ok"'* ]]; then
-        status_line "PASS" "QMT Bridge API health is ok"
+        status_line "PASS" "StarBridge Quant API health is ok"
         set_result 0
     else
-        status_line "FAIL" "QMT Bridge API health check failed"
+        status_line "FAIL" "StarBridge Quant API health check failed"
         set_result 2
     fi
 }
 
-printf 'QMT Bridge health check\n'
+printf 'StarBridge Quant health check\n'
 printf 'time: %s\n' "$(date '+%Y-%m-%d %H:%M:%S %Z')"
 printf 'target: %s:%s\n' "$HOST" "$PORT"
 

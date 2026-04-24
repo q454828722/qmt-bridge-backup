@@ -18,7 +18,7 @@ from .research_client import (
     load_snapshot,
     write_diff_report,
 )
-from .qmt_gics4_industry import (
+from .starbridge_gics4_industry import (
     DEFAULT_QMT_GICS4_CACHE,
     DEFAULT_QMT_GICS4_SUMMARY,
     fetch_qmt_gics4_industry_map,

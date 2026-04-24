@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Forward WSL localhost:18888 to the Windows-hosted QMT Bridge service."""
+"""Forward WSL localhost:18888 to the Windows-hosted StarBridge Quant service."""
 
 from __future__ import annotations
 
@@ -26,10 +26,20 @@ def default_gateway() -> str:
     return "172.23.16.1"
 
 
-LISTEN_HOST = os.environ.get("QMT_BRIDGE_WSL_LISTEN_HOST", "127.0.0.1")
-LISTEN_PORT = int(os.environ.get("QMT_BRIDGE_WSL_LISTEN_PORT", "18888"))
-TARGET_HOST = os.environ.get("QMT_BRIDGE_WINDOWS_HOST", default_gateway())
-TARGET_PORT = int(os.environ.get("QMT_BRIDGE_PORT", "18888"))
+LISTEN_HOST = os.environ.get("STARBRIDGE_WSL_LISTEN_HOST") or os.environ.get(
+    "QMT_BRIDGE_WSL_LISTEN_HOST", "127.0.0.1"
+)
+LISTEN_PORT = int(
+    os.environ.get("STARBRIDGE_WSL_LISTEN_PORT")
+    or os.environ.get("QMT_BRIDGE_WSL_LISTEN_PORT", "18888")
+)
+TARGET_HOST = os.environ.get("STARBRIDGE_WINDOWS_HOST") or os.environ.get(
+    "QMT_BRIDGE_WINDOWS_HOST", default_gateway()
+)
+TARGET_PORT = int(
+    os.environ.get("STARBRIDGE_PORT")
+    or os.environ.get("QMT_BRIDGE_PORT", "18888")
+)
 
 
 def relay(left: socket.socket, right: socket.socket) -> None:

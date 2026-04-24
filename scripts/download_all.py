@@ -27,7 +27,7 @@ from pathlib import Path
 import pandas as pd
 from xtquant import xtdata
 
-from qmt_bridge.server.downloader import (
+from starbridge_quant.server.downloader import (
     download_single_kline,
     make_batches,
     wait_future,

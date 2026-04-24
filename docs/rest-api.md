@@ -1,7 +1,7 @@
 # REST API 端点速查
 
 !!! tip "交互式文档"
-    服务运行后，访问 `http://<host>:8000/docs` (Swagger UI) 或 `http://<host>:8000/redoc` (ReDoc) 可获得交互式 API 文档，支持在线测试。
+    服务运行后，访问 `http://<host>:18888/docs` (Swagger UI) 或 `http://<host>:18888/redoc` (ReDoc) 可获得交互式 API 文档，支持在线测试。
 
 ## Legacy 端点（向后兼容）
 

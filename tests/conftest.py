@@ -1,1 +1,1 @@
-"""Shared test fixtures for QMT Bridge."""
+"""Shared test fixtures for StarBridge Quant."""

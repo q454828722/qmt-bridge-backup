@@ -9,7 +9,7 @@
 负责运行和维护：
 
 - miniQMT 客户端
-- `qmt-server`
+- `starbridge-server`
 - QMT 本地缓存下载
 - QMT 原始缓存检查和清洗脚本
 - Windows 启动脚本、计划任务、转发配套脚本

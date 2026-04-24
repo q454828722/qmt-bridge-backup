@@ -5,7 +5,7 @@
 !!! note "需要认证"
     融资融券方法需要在创建客户端时传入 `api_key` 参数。
 
-::: qmt_bridge.client.credit.CreditMixin
+::: starbridge_quant.client.credit.CreditMixin
     options:
       show_root_heading: false
       heading_level: 2

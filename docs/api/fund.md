@@ -5,7 +5,7 @@
 !!! note "需要认证"
     资金划转方法需要在创建客户端时传入 `api_key` 参数。
 
-::: qmt_bridge.client.fund.FundMixin
+::: starbridge_quant.client.fund.FundMixin
     options:
       show_root_heading: false
       heading_level: 2

@@ -1,4 +1,4 @@
-# QMT Bridge — 项目快捷命令
+# StarBridge Quant — 项目快捷命令
 # 使用: just <命令>  |  just --list 查看所有命令
 
 # Windows 下使用 PowerShell 作为默认 shell
@@ -34,28 +34,28 @@ install-all:
 
 # 启动 API 服务（前台，Ctrl+C 停止）
 serve *ARGS:
-    qmt-server {{ARGS}}
+    starbridge-server --port 18888 {{ARGS}}
 
 # 启动 API 服务（指定端口）
-serve-port port="8000":
-    qmt-server --port {{port}}
+serve-port port="18888":
+    starbridge-server --port {{port}}
 
 # 启动 API 服务（调试模式）
 serve-debug:
-    qmt-server --log-level debug
+    starbridge-server --port 18888 --log-level debug
 
 # 启动定时下载调度器（独立进程，与 serve 分开运行）
 scheduler *ARGS:
-    qmt-scheduler {{ARGS}}
+    starbridge-scheduler {{ARGS}}
 
 # 启动定时下载调度器（调试模式）
 scheduler-debug:
-    qmt-scheduler --log-level debug
+    starbridge-scheduler --log-level debug
 
 # 停止 API 服务（查找并终止占用 18888 端口的进程）
 serve-stop:
-    @echo "正在查找 qmt-server 进程..."
-    Get-NetTCPConnection -LocalPort 18888 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; if ($?) { echo "✅ qmt-server 已停止" } else { echo "⚠️ 未找到运行中的 qmt-server" }
+    @echo "正在查找 starbridge-server 进程..."
+    Get-NetTCPConnection -LocalPort 18888 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }; if ($?) { echo "✅ starbridge-server 已停止" } else { echo "⚠️ 未找到运行中的 starbridge-server" }
 
 # ─────────────────────────── 数据下载 ─────────────────────────
 
@@ -97,14 +97,14 @@ docs-build:
 
 # pdoc 本地预览客户端 API（http://localhost:8002）
 docs-pdoc:
-    pdoc src/qmt_bridge/client/ -p 8002
+    pdoc src/starbridge_quant/client/ -p 8002
 
 # 一键构建 MkDocs + pdoc
 docs-all:
     @echo "==> 构建 MkDocs 文档..."
     mkdocs build -d site/
     @echo "==> 构建 pdoc API 参考..."
-    pdoc -o site/pdoc src/qmt_bridge/client/
+    pdoc -o site/pdoc src/starbridge_quant/client/
     @echo "==> 完成！"
     @echo "    MkDocs: site/index.html"
     @echo "    pdoc:   site/pdoc/index.html"
@@ -127,7 +127,7 @@ test-v:
 
 # 类型检查（需要 mypy）
 typecheck:
-    python -m mypy src/qmt_bridge/
+    python -m mypy src/starbridge_quant/
 
 # 格式化代码（需要 ruff）
 fmt:
@@ -163,4 +163,4 @@ clean:
 
 # 显示项目版本
 version:
-    @python -c "from qmt_bridge._version import __version__; print(__version__)"
+    @python -c "from starbridge_quant._version import __version__; print(__version__)"

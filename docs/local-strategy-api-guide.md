@@ -2,13 +2,13 @@
 
 这份手册面向当前这台 Windows 机器上的本地部署：
 
-- QMT Bridge 地址：`http://127.0.0.1:18888`
+- StarBridge Quant 地址：`http://127.0.0.1:18888`
 - 局域网地址：`http://<your-lan-ip>:18888`
 - Swagger 文档：`http://127.0.0.1:18888/docs`
 - miniQMT 用户目录：`<miniqmt-userdir>`
 - 交易账号：`<your-trading-account>`
 
-交易、融资融券、资金划转、银证转账、约定式交易接口需要 `X-API-Key`。API Key 在 `D:\qmt-bridge\.env` 里，不要写死到策略代码、Git 仓库或笔记里。
+交易、融资融券、资金划转、银证转账、约定式交易接口需要 `X-API-Key`。API Key 在 `D:\starbridge-quant\.env` 里，不要写死到策略代码、Git 仓库或笔记里。
 
 ## 1. 先做连通性检查
 
@@ -22,7 +22,7 @@ Invoke-RestMethod http://127.0.0.1:18888/api/meta/connection_status
 Python：
 
 ```python
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 client = QMTClient(host="127.0.0.1", port=18888)
 
@@ -34,7 +34,7 @@ print(client.get_connection_status())
 
 ```python
 from pathlib import Path
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 
 def read_env(path: str, key: str) -> str:
@@ -47,7 +47,7 @@ def read_env(path: str, key: str) -> str:
     return ""
 
 
-api_key = read_env(r"D:\qmt-bridge\.env", "QMT_BRIDGE_API_KEY")
+api_key = read_env(r"D:\starbridge-quant\.env", "STARBRIDGE_API_KEY")
 client = QMTClient(host="127.0.0.1", port=18888, api_key=api_key)
 
 print(client.get_account_status())
@@ -55,16 +55,16 @@ print(client.get_account_status())
 
 ## 2. 建议的策略项目连接模板
 
-在你的策略项目里放一个类似 `qmt_client.py` 的小模块，后续策略统一从这里拿客户端：
+在你的策略项目里放一个类似 `starbridge_client.py` 的小模块，后续策略统一从这里拿客户端：
 
 ```python
 from pathlib import Path
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
 
 QMT_HOST = "127.0.0.1"
 QMT_PORT = 18888
-QMT_ENV = Path(r"D:\qmt-bridge\.env")
+QMT_ENV = Path(r"D:\starbridge-quant\.env")
 
 
 def _read_env_value(key: str, default: str = "") -> str:
@@ -80,18 +80,18 @@ def _read_env_value(key: str, default: str = "") -> str:
     return default
 
 
-def make_qmt_client(with_trading: bool = False) -> QMTClient:
-    api_key = _read_env_value("QMT_BRIDGE_API_KEY") if with_trading else ""
+def make_starbridge_client(with_trading: bool = False) -> QMTClient:
+    api_key = _read_env_value("STARBRIDGE_API_KEY") if with_trading else ""
     return QMTClient(host=QMT_HOST, port=QMT_PORT, api_key=api_key)
 ```
 
 使用：
 
 ```python
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
-data_client = make_qmt_client()
-trade_client = make_qmt_client(with_trading=True)
+data_client = make_starbridge_client()
+trade_client = make_starbridge_client(with_trading=True)
 ```
 
 ## 3. 实时行情快照
@@ -99,9 +99,9 @@ trade_client = make_qmt_client(with_trading=True)
 适合盘中轮询、风控检查、简易信号判断：
 
 ```python
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
-client = make_qmt_client()
+client = make_starbridge_client()
 
 stocks = ["000001.SZ", "600519.SH", "000001.SH"]
 snapshot = client.get_market_snapshot(stocks)
@@ -121,9 +121,9 @@ curl.exe "http://127.0.0.1:18888/api/market/full_tick?stocks=000001.SZ,600519.SH
 常用增强版接口 `get_history_ex`，支持多股票、复权和填充：
 
 ```python
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
-client = make_qmt_client()
+client = make_starbridge_client()
 
 bars = client.get_history_ex(
     ["000001.SZ", "600519.SH"],
@@ -165,9 +165,9 @@ local_bars = client.get_local_data(
 批量下载历史数据：
 
 ```python
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
-client = make_qmt_client()
+client = make_starbridge_client()
 
 client.download_batch(
     stocks=["000001.SZ", "600519.SH"],
@@ -233,9 +233,9 @@ print(client.code_to_market("600519.SH"))
 以下接口需要 `with_trading=True`：
 
 ```python
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
-client = make_qmt_client(with_trading=True)
+client = make_starbridge_client(with_trading=True)
 
 print(client.get_account_status())
 asset = client.query_asset()
@@ -265,7 +265,7 @@ curl.exe -H "X-API-Key: <your-api-key>" http://127.0.0.1:18888/api/trading/order
 
 ```python
 from dataclasses import dataclass
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
 
 @dataclass
@@ -300,7 +300,7 @@ def submit_order(intent: OrderIntent, dry_run: bool = True):
         print("DRY RUN:", payload)
         return {"dry_run": True, "payload": payload}
 
-    client = make_qmt_client(with_trading=True)
+    client = make_starbridge_client(with_trading=True)
     return client.place_order(**payload)
 
 
@@ -320,7 +320,7 @@ print(result)
 撤单：
 
 ```python
-client = make_qmt_client(with_trading=True)
+client = make_starbridge_client(with_trading=True)
 client.cancel_order(order_id=123456)
 ```
 
@@ -330,10 +330,10 @@ WebSocket 适合低频 UI 推送、实时监控和分钟线增量更新：
 
 ```python
 import asyncio
-from qmt_client import make_qmt_client
+from starbridge_client import make_starbridge_client
 
 
-client = make_qmt_client()
+client = make_starbridge_client()
 
 
 def on_data(data):
@@ -375,7 +375,7 @@ asyncio.run(
 交易回报：
 
 ```python
-client = make_qmt_client(with_trading=True)
+client = make_starbridge_client(with_trading=True)
 
 asyncio.run(
     client.subscribe_trade_events(
@@ -435,7 +435,7 @@ http://127.0.0.1:18888/docs
 
 ```powershell
 Get-NetTCPConnection -LocalPort 18888
-Get-Content D:\qmt-bridge\logs\server.err.log -Tail 80
+Get-Content D:\starbridge-quant\logs\server.err.log -Tail 80
 ```
 
 再检查 miniQMT 是否仍在登录状态，且使用独立交易模式。

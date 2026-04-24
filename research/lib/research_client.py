@@ -19,7 +19,7 @@ from typing import Any, Iterable, Sequence
 
 import pandas as pd
 
-from qmt_client import make_qmt_client
+from starbridge_quant.client_factory import make_starbridge_client
 
 
 class DataDomain(str, Enum):
@@ -990,7 +990,7 @@ class QMTResearchSource(ResearchSourceAdapter):
     supports_instrument = True
 
     def __init__(self, *, host: str | None = None, port: int | None = None, api_key: str | None = None):
-        self.client = make_qmt_client(host=host, port=port, api_key=api_key)
+        self.client = make_starbridge_client(host=host, port=port, api_key=api_key)
 
     def fetch_daily_bars(
         self,
@@ -1124,7 +1124,7 @@ class TushareResearchSource(ResearchSourceAdapter):
         self.token = token
         self.list_status = list_status
         self._instrument_cache: pd.DataFrame | None = None
-        default_cache = Path.home() / ".cache" / "qmt-bridge" / f"tushare_stock_basic_{list_status}.csv"
+        default_cache = Path.home() / ".cache" / "starbridge-quant" / f"tushare_stock_basic_{list_status}.csv"
         self.cache_path = Path(cache_path).expanduser() if cache_path else default_cache
 
     def _pro(self):

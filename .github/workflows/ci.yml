@@ -23,11 +23,33 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install package
-        run: pip install -e ".[server,ws]"
+        run: pip install -e ".[server,ws]" pytest build
 
       - name: Verify import
-        run: python -c "from qmt_bridge import QMTClient; print('import OK')"
+        run: python -c "from starbridge_quant import QMTClient; print('import OK')"
 
       - name: Run tests
         run: python -m pytest tests/ -v
-        if: hashFiles('tests/') != ''
+        if: hashFiles('tests/test_*.py', 'tests/**/test_*.py', 'tests/**/*_test.py') != ''
+
+      - name: Verify wheel compatibility wrappers
+        run: |
+          rm -rf dist
+          python -m build --wheel
+          python - <<'PY'
+          import glob
+          import zipfile
+
+          wheel = sorted(glob.glob("dist/starbridge_quant-*-py3-none-any.whl"))[-1]
+          with zipfile.ZipFile(wheel) as zf:
+              names = set(zf.namelist())
+              assert "qmt_client.py" in names, names
+              assert "starbridge_client.py" in names, names
+
+              entry_points_name = next(
+                  name for name in names if name.endswith(".dist-info/entry_points.txt")
+              )
+              entry_points = zf.read(entry_points_name).decode()
+              assert "starbridge-server = starbridge_quant.server.cli:main" in entry_points
+              assert "qmt-server = starbridge_quant.server.cli:main" in entry_points
+          PY

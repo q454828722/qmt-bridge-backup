@@ -1,13 +1,18 @@
 @echo off
 chcp 65001 >nul 2>&1
-REM QMT Bridge — 停止服务
+REM StarBridge Quant — 停止服务
 
 cd /d "%~dp0.."
 
-set "PID_FILE=%cd%\qmt-bridge.pid"
+set "PID_FILE=%cd%\starbridge-quant.pid"
+set "LEGACY_PID_FILE=%cd%\qmt-bridge.pid"
+
+if not exist "%PID_FILE%" if exist "%LEGACY_PID_FILE%" (
+    copy /y "%LEGACY_PID_FILE%" "%PID_FILE%" >nul
+)
 
 if not exist "%PID_FILE%" (
-    echo [QMT Bridge] PID 文件不存在，服务可能未在运行
+    echo [StarBridge Quant] PID 文件不存在，服务可能未在运行
     exit /b 0
 )
 
@@ -16,12 +21,13 @@ set /p PID=<"%PID_FILE%"
 REM 检查进程是否存在
 tasklist /fi "PID eq %PID%" 2>nul | find "%PID%" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [QMT Bridge] 进程 (PID: %PID%) 已不存在，清理 PID 文件
+    echo [StarBridge Quant] 进程 (PID: %PID%) 已不存在，清理 PID 文件
     del /f "%PID_FILE%" >nul 2>&1
+    if exist "%LEGACY_PID_FILE%" del /f "%LEGACY_PID_FILE%" >nul 2>&1
     exit /b 0
 )
 
-echo [QMT Bridge] 正在停止服务 (PID: %PID%)...
+echo [StarBridge Quant] 正在停止服务 (PID: %PID%)...
 
 REM 优雅终止：先尝试 taskkill，再强制
 taskkill /pid %PID% >nul 2>&1
@@ -31,14 +37,16 @@ for /l %%i in (1,1,10) do (
     timeout /t 1 /nobreak >nul
     tasklist /fi "PID eq %PID%" 2>nul | find "%PID%" >nul 2>&1
     if errorlevel 1 (
-        echo [QMT Bridge] 服务已停止
+        echo [StarBridge Quant] 服务已停止
         del /f "%PID_FILE%" >nul 2>&1
+        if exist "%LEGACY_PID_FILE%" del /f "%LEGACY_PID_FILE%" >nul 2>&1
         exit /b 0
     )
 )
 
 REM 超时，强制终止
-echo [QMT Bridge] 优雅停止超时，强制终止...
+echo [StarBridge Quant] 优雅停止超时，强制终止...
 taskkill /f /pid %PID% >nul 2>&1
 del /f "%PID_FILE%" >nul 2>&1
-echo [QMT Bridge] 服务已强制停止
+if exist "%LEGACY_PID_FILE%" del /f "%LEGACY_PID_FILE%" >nul 2>&1
+echo [StarBridge Quant] 服务已强制停止

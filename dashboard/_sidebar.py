@@ -28,7 +28,7 @@ def render_sidebar():
     """渲染侧边栏连接配置并返回 client（可能为 None）。"""
     cfg = _load_config()
 
-    st.sidebar.title("QMT Bridge")
+    st.sidebar.title("StarBridge Quant")
     host = st.sidebar.text_input("服务地址", value=cfg.get("host", "127.0.0.1"), key="_sb_host")
     port = st.sidebar.number_input(
         "端口", value=cfg.get("port", 8000), min_value=1, max_value=65535, step=1, key="_sb_port"
@@ -39,7 +39,7 @@ def render_sidebar():
 
     if st.sidebar.button("连接 / 刷新", key="_sb_connect"):
         try:
-            from qmt_bridge import QMTClient
+            from starbridge_quant import QMTClient
 
             client = QMTClient(host, int(port), api_key=api_key)
             health = client.health_check()

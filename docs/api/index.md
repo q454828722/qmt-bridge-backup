@@ -1,23 +1,23 @@
 # QMTClient 总览
 
-`QMTClient` 是 QMT Bridge 的 Python 客户端，基于标准库实现，零外部依赖（WebSocket 功能需安装 `websockets`）。
+`QMTClient` 是 StarBridge Quant 的 Python 客户端，基于标准库实现，零外部依赖（WebSocket 功能需安装 `websockets`）。
 
 ## 安装
 
 ```bash
 # 零依赖安装（仅 HTTP）
-pip install qmt-bridge
+pip install starbridge-quant
 
 # 含 WebSocket 订阅支持
-pip install "qmt-bridge[client]"
+pip install "starbridge-quant[client]"
 ```
 
 ## 快速示例
 
 ```python
-from qmt_bridge import QMTClient
+from starbridge_quant import QMTClient
 
-client = QMTClient(host="192.168.1.100", port=8000)
+client = QMTClient(host="192.168.1.100", port=18888)
 
 # 历史 K 线
 df = client.get_history("000001.SZ", period="1d", count=60)
@@ -58,7 +58,7 @@ order_id = client.place_order("000001.SZ", order_type=23, order_volume=100)
 
 ## 类引用
 
-::: qmt_bridge.client.QMTClient
+::: starbridge_quant.client.QMTClient
     options:
       show_root_heading: true
       heading_level: 3

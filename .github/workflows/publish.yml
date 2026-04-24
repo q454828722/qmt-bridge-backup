@@ -13,7 +13,7 @@ jobs:
       id-token: write  # OIDC for Trusted Publisher
     environment:
       name: pypi
-      url: https://pypi.org/project/qmt-bridge/
+      url: https://pypi.org/project/starbridge-quant/
 
     steps:
       - uses: actions/checkout@v4
@@ -38,8 +38,8 @@ jobs:
       - name: Verify TestPyPI install
         run: |
           sleep 15  # 等待 TestPyPI 索引更新
-          pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ qmt-bridge
-          python -c "import qmt_bridge; print(f'TestPyPI OK: {qmt_bridge.__version__}')"
+          pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ starbridge-quant
+          python -c "import starbridge_quant; print(f'TestPyPI OK: {starbridge_quant.__version__}')"
         continue-on-error: true
 
       - name: Publish to PyPI

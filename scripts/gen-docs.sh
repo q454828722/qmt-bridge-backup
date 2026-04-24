@@ -8,8 +8,8 @@ mkdocs build -d site/
 
 # pdoc
 echo "==> 构建 pdoc API 参考..."
-pdoc --html --output-dir site/pdoc src/qmt_bridge/client/
+pdoc --html --output-dir site/pdoc src/starbridge_quant/client/
 
 echo "==> 完成！"
 echo "    MkDocs: site/index.html"
-echo "    pdoc:   site/pdoc/qmt_bridge/client/index.html"
+echo "    pdoc:   site/pdoc/starbridge_quant/client/index.html"

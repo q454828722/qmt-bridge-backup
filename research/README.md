@@ -4,7 +4,7 @@
 
 推荐分工：
 
-- Windows：QMT 客户端、`qmt-server`、缓存下载与缓存清洗
+- Windows：QMT 客户端、`starbridge-server`、缓存下载与缓存清洗
 - WSL：因子研究、策略原型、回测、分析 notebook
 
 目录约定：
@@ -17,7 +17,7 @@
 
 建议的研究数据入口：
 
-1. `QMT Bridge API`
+1. `StarBridge Quant API`
    - 适合读取本地缓存、历史行情、财务数据、板块、交易日历
 2. `Tushare`
    - 适合补充公开基础信息、做抽样核对、补研究期内公开口径数据
@@ -34,8 +34,8 @@
 推荐在 WSL 中使用：
 
 ```bash
-source "$HOME/.venvs/qmt-bridge-quant/bin/activate"
+source "$HOME/.venvs/starbridge-quant/bin/activate"
 jupyter lab
 ```
 
-Jupyter kernel 请选择 `QMT Bridge Quant (WSL Native)`。
+Jupyter kernel 请选择 `StarBridge Quant (WSL Native)`。
