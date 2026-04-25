@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import logging
 import os
@@ -796,6 +797,52 @@ def download_kline_v2(
 
 # ── CLI ───────────────────────────────────────────────────────
 
+def _dedupe_stocks(stocks: list[str]) -> list[str]:
+    """按原顺序去重并清理空白标的。"""
+    result: list[str] = []
+    seen: set[str] = set()
+    for stock in stocks:
+        code = stock.strip().upper()
+        if code and code not in seen:
+            seen.add(code)
+            result.append(code)
+    return result
+
+
+def load_symbols_file(path: str) -> list[str]:
+    """读取定向标的文件，支持单列文本或含 stock_code/code/symbol 的 CSV。"""
+    symbol_path = Path(path)
+    rows = list(csv.reader(symbol_path.read_text(encoding="utf-8-sig").splitlines()))
+    if not rows:
+        return []
+
+    header = [cell.strip().lower() for cell in rows[0]]
+    data_rows = rows
+    column_idx = 0
+    for candidate in ("stock_code", "code", "symbol"):
+        if candidate in header:
+            column_idx = header.index(candidate)
+            data_rows = rows[1:]
+            break
+
+    symbols = []
+    for row in data_rows:
+        if len(row) > column_idx:
+            symbols.append(row[column_idx])
+    return _dedupe_stocks(symbols)
+
+
+def load_requested_symbols(symbols_arg: str, symbols_file: str) -> list[str]:
+    """合并 CLI 传入的定向标的列表。"""
+    stocks: list[str] = []
+    if symbols_file:
+        stocks.extend(load_symbols_file(symbols_file))
+    if symbols_arg:
+        normalized = symbols_arg.replace("\n", ",").replace(" ", ",")
+        stocks.extend(part for part in normalized.split(",") if part.strip())
+    return _dedupe_stocks(stocks)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="逐股精准增量下载沪深 A 股历史行情 + 财务数据 (v2)",
@@ -843,6 +890,16 @@ def parse_args() -> argparse.Namespace:
         "--sectors",
         default=DEFAULT_SECTORS,
         help=f"目标板块，逗号分隔 (默认: {DEFAULT_SECTORS})",
+    )
+    parser.add_argument(
+        "--symbols",
+        default="",
+        help="定向标的列表，逗号或空格分隔；设置后优先于 --sectors",
+    )
+    parser.add_argument(
+        "--symbols-file",
+        default="",
+        help="定向标的文件，支持单列文本或含 stock_code/code/symbol 的 CSV；设置后优先于 --sectors",
     )
     parser.add_argument(
         "--limit",
@@ -957,27 +1014,35 @@ def main() -> None:
     # ── 状态管理 ──
     state = load_state()
 
-    # 1. 获取股票列表（支持多板块合并去重）
-    sectors = [s.strip() for s in args.sectors.split(",")]
-    stocks: list[str] = []
-    seen: set[str] = set()
-    for sector in sectors:
-        codes = xtdata.get_stock_list_in_sector(sector)
-        logger.info("板块 [%s] 返回 %d 只", sector, len(codes))
-        for c in codes:
-            if c not in seen:
-                seen.add(c)
-                stocks.append(c)
+    # 1. 获取股票列表（支持定向列表或多板块合并去重）
+    requested_stocks = load_requested_symbols(args.symbols, args.symbols_file)
+    if requested_stocks:
+        sectors = []
+        stocks = requested_stocks
+        logger.info("使用定向标的列表，共 %d 只", len(stocks))
+        print(f"使用定向标的列表，共 {len(stocks)} 只")
+    else:
+        sectors = [s.strip() for s in args.sectors.split(",")]
+        stocks = []
+        seen: set[str] = set()
+        for sector in sectors:
+            codes = xtdata.get_stock_list_in_sector(sector)
+            logger.info("板块 [%s] 返回 %d 只", sector, len(codes))
+            for c in codes:
+                if c not in seen:
+                    seen.add(c)
+                    stocks.append(c)
     if not stocks:
-        logger.error("板块 %s 返回空列表", sectors)
-        print(f"错误: 板块 {sectors} 返回空列表，请检查 xtdata 连接状态")
+        logger.error("目标标的为空")
+        print("错误: 目标标的为空，请检查 --symbols/--symbols-file 或 xtdata 板块连接状态")
         sys.exit(1)
     original_count = len(stocks)
     if args.limit > 0:
         stocks = stocks[: args.limit]
-        print(f"板块 {sectors} 共 {original_count} 只标的，本次限量测试前 {len(stocks)} 只")
+        scope = "定向列表" if requested_stocks else f"板块 {sectors}"
+        print(f"{scope} 共 {original_count} 只标的，本次限量测试前 {len(stocks)} 只")
         logger.info("限量测试: 原始 %d 只，本次 %d 只", original_count, len(stocks))
-    else:
+    elif not requested_stocks:
         print(f"板块 {sectors} 共 {len(stocks)} 只标的")
 
     periods = [p.strip() for p in args.periods.split(",")]

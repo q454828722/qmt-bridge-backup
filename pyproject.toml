@@ -40,6 +40,9 @@ ws = ["websockets>=11.0"]
 client = ["websockets>=11.0"]
 notify = ["httpx>=0.25"]
 scripts = ["tqdm>=4.60"]
+test = [
+    "pytest>=8.0",
+]
 full = [
     "starbridge-quant[server,ws,notify,scripts]",
 ]

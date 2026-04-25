@@ -16,12 +16,12 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from research.lib.starbridge_gics4_industry import (
+from research.lib.starbridge_gics4_industry import (  # noqa: E402
     DEFAULT_QMT_GICS4_CACHE,
     fetch_qmt_gics4_industry_map,
     load_cached_qmt_gics4_industry_map,
 )
-from research.lib.research_client import TushareResearchSource
+from research.lib.research_client import TushareResearchSource  # noqa: E402
 
 
 DEFAULT_PREFILTER = Path("data/yuanqi_replica/basic/quant_backtest_prefilter.csv")
@@ -95,6 +95,20 @@ def ensure_exists(path: Path) -> Path:
     return path
 
 
+def read_snapshot_frame(snapshot_dir: Path, dataset_name: str, manifest: dict) -> pd.DataFrame:
+    dataset = manifest.get("datasets", {}).get(dataset_name, {})
+    relative_path = dataset.get("relative_path", "")
+    storage_format = manifest.get("storage_format", "parquet")
+    if relative_path:
+        path = ensure_exists(snapshot_dir / relative_path)
+    else:
+        suffix = "csv" if storage_format == "csv" else "parquet"
+        path = ensure_exists(snapshot_dir / f"{dataset_name}.{suffix}")
+    if path.suffix.lower() == ".csv":
+        return pd.read_csv(path)
+    return pd.read_parquet(path)
+
+
 def load_inputs(
     prefilter_path: Path,
     financial_universe_path: Path,
@@ -103,9 +117,9 @@ def load_inputs(
     prefilter = pd.read_csv(ensure_exists(prefilter_path))
     financial_universe = pd.read_csv(ensure_exists(financial_universe_path))
     snapshot_dir = ensure_exists(snapshot_dir)
-    daily_bar = pd.read_parquet(snapshot_dir / "daily_bar.parquet")
-    instrument = pd.read_parquet(snapshot_dir / "instrument.parquet")
     manifest = json.loads((snapshot_dir / "manifest.json").read_text(encoding="utf-8"))
+    daily_bar = read_snapshot_frame(snapshot_dir, "daily_bar", manifest)
+    instrument = read_snapshot_frame(snapshot_dir, "instrument", manifest)
     return prefilter, financial_universe, daily_bar, instrument, manifest
 
 

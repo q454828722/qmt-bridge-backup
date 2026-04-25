@@ -28,7 +28,7 @@ install-dashboard:
 
 # 安装全部依赖（服务端 + 文档 + 仪表盘）
 install-all:
-    pip install -e ".[full,docs,dashboard]"
+    pip install -e ".[full,docs,dashboard,test]"
 
 # ─────────────────────────── 服务 ───────────────────────────
 
@@ -85,6 +85,36 @@ download-5m-recent *ARGS:
 dashboard:
     streamlit run dashboard/app.py
 
+# ─────────────────────────── 研究代理 ───────────────────────
+
+# 输出 A 股量化代理矩阵（支持 --format json/mermaid）
+agent-matrix *ARGS:
+    python scripts/describe_quant_agent_matrix.py {{ARGS}}
+
+# 使用 GM Windows SDK 对清洗失败清单做只读备用源验证
+gm-fallback-validation *ARGS:
+    python scripts/run_gm_fallback_validation.py {{ARGS}}
+
+# 应用多源验证后的 QMT 派生缓存修复，并生成 QMT 原生财务刷新清单
+apply-qmt-cache-repairs *ARGS:
+    python scripts/apply_verified_qmt_cache_repairs.py {{ARGS}}
+
+# 从最新清洗数据生成批处理安全的全量研究快照
+clean-full-snapshot *ARGS:
+    python scripts/write_clean_full_snapshot.py {{ARGS}}
+
+# 将清洗快照构建成研究侧 SQLite 数据库
+build-research-db *ARGS:
+    python scripts/build_research_database.py {{ARGS}}
+
+# 增量维护研究侧 SQLite 数据库（证据、冲突、修复、覆盖层）
+maintain-research-db *ARGS:
+    python scripts/maintain_research_database.py {{ARGS}}
+
+# 构建三因子并行研究使用的日线派生因子缓存
+build-factor-cache *ARGS:
+    python scripts/build_factor_cache.py {{ARGS}}
+
 # ─────────────────────────── 文档 ───────────────────────────
 
 # 本地预览 MkDocs 文档站点（http://127.0.0.1:8001）
@@ -117,11 +147,11 @@ docs-clean:
 
 # 运行测试
 test *ARGS:
-    python -m pytest tests/ {{ARGS}}
+    python scripts/run_pytest.py tests/ {{ARGS}}
 
 # 运行测试（verbose）
 test-v:
-    python -m pytest tests/ -v
+    python scripts/run_pytest.py tests/ -v
 
 # ─────────────────────────── 代码质量 ───────────────────────
 

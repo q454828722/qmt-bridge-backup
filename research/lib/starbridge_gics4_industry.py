@@ -9,8 +9,6 @@ from typing import Sequence
 
 import pandas as pd
 
-from starbridge_quant.client_factory import make_starbridge_client
-
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_QMT_GICS4_CACHE = ROOT / "research" / "reference" / "qmt_gics4_industry_map.csv"
@@ -89,6 +87,8 @@ def load_cached_qmt_gics4_industry_map(
 def fetch_qmt_gics4_industry_map(
     symbols: Sequence[str] | None = None,
 ) -> tuple[pd.DataFrame, dict]:
+    from starbridge_quant.client_factory import make_starbridge_client
+
     client = make_starbridge_client()
     sector_list = client.get_sector_list()
     gics4_sectors = [sector for sector in sector_list if str(sector).startswith("GICS4")]

@@ -1,4 +1,4 @@
-"""Unified research data client for QMT, Tushare, and AkShare.
+"""Unified research data client for QMT, Tushare, AkShare, and GM.
 
 Design rules:
 
@@ -11,6 +11,10 @@ Design rules:
 from __future__ import annotations
 
 import json
+import os
+import subprocess
+import sys
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -18,8 +22,6 @@ from pathlib import Path
 from typing import Any, Iterable, Sequence
 
 import pandas as pd
-
-from starbridge_quant.client_factory import make_starbridge_client
 
 
 class DataDomain(str, Enum):
@@ -32,6 +34,7 @@ class SourceName(str, Enum):
     QMT = "qmt"
     TUSHARE = "tushare"
     AKSHARE = "akshare"
+    GM = "gm"
 
 
 @dataclass
@@ -180,6 +183,158 @@ def _ts_to_simple_symbol(symbol: str) -> str:
     return symbol.split(".", 1)[0]
 
 
+def _project_symbol_to_gm(symbol: str) -> str:
+    code, _, suffix = symbol.partition(".")
+    exchange = {"SH": "SHSE", "SZ": "SZSE", "BJ": "BJSE"}.get(suffix.upper(), suffix.upper())
+    return f"{exchange}.{code}" if code and exchange else symbol
+
+
+def _gm_symbol_to_project(symbol: str) -> str:
+    exchange, _, code = symbol.partition(".")
+    suffix = {"SHSE": "SH", "SZSE": "SZ", "BJSE": "BJ"}.get(exchange.upper(), exchange.upper())
+    return f"{code}.{suffix}" if code and suffix else symbol
+
+
+def _gm_date_text(value: str) -> str:
+    text = _normalize_date_text(value)
+    if len(text) == 8:
+        return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
+    return value
+
+
+def _gm_datetime_text(value: str, default_time: str) -> str:
+    date_text = _gm_date_text(value)
+    if not date_text:
+        return ""
+    return date_text if " " in date_text else f"{date_text} {default_time}"
+
+
+def _default_gm_windows_python() -> str:
+    configured = os.environ.get("STARBRIDGE_GM_WINDOWS_PYTHON", "").strip()
+    if configured:
+        return configured
+    wsl_path = Path("/mnt/c/Users/lianghua/python-sdk/python3.11.11/python.exe")
+    if wsl_path.exists():
+        return str(wsl_path)
+    return r"C:\Users\lianghua\python-sdk\python3.11.11\python.exe"
+
+
+def _write_gm_subprocess_script(script: str) -> tuple[str, Path]:
+    if sys.platform == "win32":
+        handle = tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".py",
+            prefix="starbridge_gm_",
+            encoding="utf-8",
+            delete=False,
+        )
+        with handle:
+            handle.write(script)
+        path = Path(handle.name)
+        return str(path), path
+
+    temp_dir = Path(
+        os.environ.get(
+            "STARBRIDGE_GM_TEMP_DIR_WSL",
+            "/mnt/c/Users/lianghua/AppData/Local/Temp",
+        )
+    )
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    filename = f"starbridge_gm_{os.getpid()}_{datetime.now().strftime('%Y%m%d%H%M%S%f')}.py"
+    wsl_path = temp_dir / filename
+    wsl_path.write_text(script, encoding="utf-8")
+    windows_temp_dir = os.environ.get(
+        "STARBRIDGE_GM_TEMP_DIR_WINDOWS",
+        r"C:\Users\lianghua\AppData\Local\Temp",
+    ).rstrip("\\/")
+    return f"{windows_temp_dir}\\{filename}", wsl_path
+
+
+def _normalize_gm_bar_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    if result.empty:
+        return result
+    if "symbol" in result.columns:
+        result["symbol"] = result["symbol"].astype(str).map(_gm_symbol_to_project)
+    if "eob" in result.columns:
+        result = result.rename(columns={"eob": "trade_date"})
+    if "trade_date" in result.columns:
+        result["trade_date"] = _normalize_date_series(result["trade_date"])
+    ordered = ["symbol", "trade_date", "open", "high", "low", "close", "volume", "amount"]
+    keep = [column for column in ordered if column in result.columns]
+    extra = [column for column in result.columns if column not in keep]
+    return result[keep + extra]
+
+
+def _normalize_gm_instrument_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    if result.empty:
+        return result
+    rename_map = {
+        "sec_name": "name",
+        "listed_date": "list_date",
+        "delisted_date": "delist_date",
+    }
+    result = result.rename(columns=rename_map)
+    if "symbol" in result.columns:
+        result["symbol"] = result["symbol"].astype(str).map(_gm_symbol_to_project)
+    if "list_date" in result.columns:
+        result["list_date"] = _normalize_date_series(result["list_date"])
+    if "delist_date" in result.columns:
+        result["delist_date"] = _normalize_date_series(result["delist_date"])
+    if "exchange" not in result.columns and "symbol" in result.columns:
+        result["exchange"] = result["symbol"].astype(str).str.split(".").str[-1]
+    ordered = ["symbol", "name", "list_date", "delist_date", "exchange"]
+    keep = [column for column in ordered if column in result.columns]
+    extra = [column for column in result.columns if column not in keep]
+    return result[keep + extra]
+
+
+def _normalize_gm_financial_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    result = frame.copy()
+    if result.empty:
+        return result
+    rename_map = {
+        "rpt_date": "report_date",
+        "pub_date": "announce_date",
+    }
+    result = result.rename(columns=rename_map)
+    if "symbol" in result.columns:
+        result["symbol"] = result["symbol"].astype(str).map(_gm_symbol_to_project)
+    if "report_date" in result.columns:
+        result["report_date"] = _normalize_date_series(result["report_date"])
+    if "announce_date" in result.columns:
+        result["announce_date"] = _normalize_date_series(result["announce_date"])
+    ordered = ["symbol", "report_date", "announce_date"]
+    keep = [column for column in ordered if column in result.columns]
+    extra = [column for column in result.columns if column not in keep]
+    return result[keep + extra]
+
+
+def _json_records(frame: pd.DataFrame | None) -> list[dict[str, Any]]:
+    if frame is None or frame.empty:
+        return []
+    result = frame.copy()
+    for column in result.columns:
+        result[column] = result[column].map(
+            lambda value: value.isoformat() if hasattr(value, "isoformat") else value
+        )
+    result = result.where(pd.notna(result), None)
+    return result.to_dict(orient="records")
+
+
+def _load_gm_token_from_local(token_storage_json: str) -> str:
+    token = os.environ.get("GM_TOKEN", "").strip()
+    if token:
+        return token
+    if token_storage_json:
+        path = Path(token_storage_json)
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return str(data.get("tokenMemo") or "")
+    return ""
+
+
 def _slugify_snapshot_name(value: str) -> str:
     slug = "".join(ch.lower() if ch.isalnum() else "_" for ch in value.strip())
     while "__" in slug:
@@ -227,10 +382,13 @@ def _normalize_tushare_bar_frame(frame: pd.DataFrame) -> pd.DataFrame:
     result = result.rename(columns={"ts_code": "symbol"})
     if "trade_date" in result.columns:
         result["trade_date"] = _normalize_date_series(result["trade_date"])
-    ordered = ["symbol", "trade_date", "open", "high", "low", "close", "vol", "amount"]
     rename_map = {"vol": "volume"}
     result = result.rename(columns=rename_map)
-    keep = [column for column in ["symbol", "trade_date", "open", "high", "low", "close", "volume", "amount"] if column in result.columns]
+    keep = [
+        column
+        for column in ["symbol", "trade_date", "open", "high", "low", "close", "volume", "amount"]
+        if column in result.columns
+    ]
     extra = [column for column in result.columns if column not in keep]
     return result[keep + extra]
 
@@ -928,9 +1086,9 @@ def _compare_frames(
     mismatch_frames: list[pd.DataFrame] = []
     summary_rows: list[dict[str, Any]] = []
 
-    for field in usable_fields:
-        left_col = f"{field}_primary"
-        right_col = f"{field}_candidate"
+    for compare_field in usable_fields:
+        left_col = f"{compare_field}_primary"
+        right_col = f"{compare_field}_candidate"
         left_is_bool = pd.api.types.is_bool_dtype(merged[left_col])
         right_is_bool = pd.api.types.is_bool_dtype(merged[right_col])
         if left_is_bool or right_is_bool:
@@ -956,14 +1114,14 @@ def _compare_frames(
                     right_col: "candidate_value",
                 }
             )
-            field_mismatches.insert(len(join_keys), "field", field)
+            field_mismatches.insert(len(join_keys), "field", compare_field)
             field_mismatches["primary_source"] = primary_source.value
             field_mismatches["candidate_source"] = candidate_source.value
             mismatch_frames.append(field_mismatches)
 
         summary_rows.append(
             {
-                "field": field,
+                "field": compare_field,
                 "compared_rows": len(merged),
                 "mismatch_rows": int(mismatch_mask.sum()),
                 "primary_source": primary_source.value,
@@ -990,6 +1148,8 @@ class QMTResearchSource(ResearchSourceAdapter):
     supports_instrument = True
 
     def __init__(self, *, host: str | None = None, port: int | None = None, api_key: str | None = None):
+        from starbridge_quant.client_factory import make_starbridge_client
+
         self.client = make_starbridge_client(host=host, port=port, api_key=api_key)
 
     def fetch_daily_bars(
@@ -1239,6 +1399,358 @@ class AkshareResearchSource(ResearchSourceAdapter):
         )
 
 
+class GmResearchSource(ResearchSourceAdapter):
+    """Read-only GM fallback through the Windows SDK process.
+
+    GM's official SDK is installed in a Windows Python environment. The WSL
+    research runtime calls it as a subprocess so the main project environment
+    does not need to import Windows-only extension modules.
+    """
+
+    name = SourceName.GM
+    supports_daily_bars = True
+    supports_financials = True
+    supports_instrument = True
+
+    _SCRIPT = r"""
+import json
+import os
+import sys
+from pathlib import Path
+
+import pandas as pd
+from gm.api import *
+
+
+def _records(frame):
+    if frame is None or getattr(frame, "empty", False):
+        return []
+    result = frame.copy()
+    for column in result.columns:
+        result[column] = result[column].map(
+            lambda value: value.isoformat() if hasattr(value, "isoformat") else value
+        )
+    result = result.where(pd.notna(result), None)
+    return result.to_dict(orient="records")
+
+
+def _load_token(storage_json):
+    token = os.environ.get("GM_TOKEN", "").strip()
+    if token:
+        return token
+    if storage_json:
+        path = Path(storage_json)
+        if path.exists():
+            data = json.loads(path.read_text(encoding="utf-8"))
+            return str(data.get("tokenMemo") or "")
+    default_path = Path.home() / ".goldminer3" / "storage.json"
+    if default_path.exists():
+        data = json.loads(default_path.read_text(encoding="utf-8"))
+        return str(data.get("tokenMemo") or "")
+    return ""
+
+
+def _main():
+    payload = json.loads(sys.stdin.read())
+    token = _load_token(payload.get("token_storage_json", ""))
+    if token:
+        set_token(token)
+
+    action = payload["action"]
+    if action == "daily_bars":
+        rows = []
+        adjust = payload.get("adjust")
+        for symbol in payload["symbols"]:
+            frame = history(
+                symbol=symbol,
+                frequency=payload.get("frequency", "1d"),
+                start_time=payload.get("start_time", ""),
+                end_time=payload.get("end_time", ""),
+                fields="symbol,eob,open,high,low,close,volume,amount",
+                skip_suspended=True,
+                adjust=adjust,
+                df=True,
+            )
+            rows.extend(_records(frame))
+        return {"ok": True, "records": rows, "version": get_version()}
+
+    if action == "instrument":
+        frame = get_instruments(
+            symbols=",".join(payload["symbols"]),
+            fields="symbol,sec_name,exchange,listed_date,delisted_date",
+            skip_suspended=False,
+            skip_st=False,
+            df=True,
+        )
+        return {"ok": True, "records": _records(frame), "version": get_version()}
+
+    if action == "financials":
+        tables = {
+            "Balance": (stk_get_fundamentals_balance, "ttl_ast,ttl_liab,ttl_eqy"),
+            "Income": (stk_get_fundamentals_income, "ttl_inc_oper,net_prof,net_prof_pcom"),
+            "CashFlow": (stk_get_fundamentals_cashflow, "net_cf_oper"),
+        }
+        output = {}
+        for table in payload["tables"]:
+            if table not in tables:
+                output[table] = []
+                continue
+            fn, fields = tables[table]
+            rows = []
+            for symbol in payload["symbols"]:
+                frame = fn(
+                    symbol,
+                    fields=fields,
+                    start_date=payload.get("start_date", ""),
+                    end_date=payload.get("end_date", ""),
+                    df=True,
+                )
+                rows.extend(_records(frame))
+            output[table] = rows
+        return {"ok": True, "tables": output, "version": get_version()}
+
+    raise ValueError(f"unknown GM action: {action}")
+
+
+try:
+    result = _main()
+except Exception as exc:
+    result = {"ok": False, "error_type": type(exc).__name__, "error": str(exc)[:2000]}
+
+print(json.dumps(result, ensure_ascii=True, default=str))
+"""
+
+    def __init__(
+        self,
+        *,
+        windows_python: str | None = None,
+        token_storage_json: str | None = None,
+        timeout_seconds: int | None = None,
+        use_subprocess: bool | None = None,
+    ):
+        self.windows_python = windows_python or _default_gm_windows_python()
+        self.token_storage_json = token_storage_json or os.environ.get(
+            "STARBRIDGE_GM_TOKEN_STORAGE_JSON",
+            r"C:\Users\lianghua\.goldminer3\storage.json",
+        )
+        self.timeout_seconds = timeout_seconds or int(os.environ.get("STARBRIDGE_GM_TIMEOUT", "120"))
+        self.use_subprocess = self._resolve_use_subprocess(use_subprocess)
+
+    @staticmethod
+    def _resolve_use_subprocess(configured: bool | None) -> bool:
+        if configured is not None:
+            return configured
+        if os.environ.get("STARBRIDGE_GM_FORCE_SUBPROCESS", "").strip() == "1":
+            return True
+        if sys.platform == "win32":
+            try:
+                import gm.api  # noqa: F401
+
+                return False
+            except Exception:
+                return True
+        return True
+
+    def _run_in_process(self, payload: dict[str, Any]) -> dict[str, Any]:
+        import gm.api as gm_api
+
+        token = _load_gm_token_from_local(self.token_storage_json)
+        if token:
+            gm_api.set_token(token)
+
+        action = payload["action"]
+        if action == "daily_bars":
+            rows = []
+            for symbol in payload["symbols"]:
+                frame = gm_api.history(
+                    symbol=symbol,
+                    frequency=payload.get("frequency", "1d"),
+                    start_time=payload.get("start_time", ""),
+                    end_time=payload.get("end_time", ""),
+                    fields="symbol,eob,open,high,low,close,volume,amount",
+                    skip_suspended=True,
+                    adjust=payload.get("adjust"),
+                    df=True,
+                )
+                rows.extend(_json_records(frame))
+            return {"ok": True, "records": rows, "version": gm_api.get_version()}
+
+        if action == "instrument":
+            frame = gm_api.get_instruments(
+                symbols=",".join(payload["symbols"]),
+                fields="symbol,sec_name,exchange,listed_date,delisted_date",
+                skip_suspended=False,
+                skip_st=False,
+                df=True,
+            )
+            return {"ok": True, "records": _json_records(frame), "version": gm_api.get_version()}
+
+        if action == "financials":
+            table_functions = {
+                "Balance": (gm_api.stk_get_fundamentals_balance, "ttl_ast,ttl_liab,ttl_eqy"),
+                "Income": (gm_api.stk_get_fundamentals_income, "ttl_inc_oper,net_prof,net_prof_pcom"),
+                "CashFlow": (gm_api.stk_get_fundamentals_cashflow, "net_cf_oper"),
+            }
+            output: dict[str, list[dict[str, Any]]] = {}
+            for table in payload["tables"]:
+                if table not in table_functions:
+                    output[table] = []
+                    continue
+                fn, fields = table_functions[table]
+                rows = []
+                for symbol in payload["symbols"]:
+                    frame = fn(
+                        symbol,
+                        fields=fields,
+                        start_date=payload.get("start_date", ""),
+                        end_date=payload.get("end_date", ""),
+                        df=True,
+                    )
+                    rows.extend(_json_records(frame))
+                output[table] = rows
+            return {"ok": True, "tables": output, "version": gm_api.get_version()}
+
+        raise ValueError(f"unknown GM action: {action}")
+
+    def _run(self, payload: dict[str, Any]) -> dict[str, Any]:
+        if not self.use_subprocess:
+            return self._run_in_process(payload)
+        request = {
+            **payload,
+            "token_storage_json": self.token_storage_json,
+        }
+        script_path, cleanup_path = _write_gm_subprocess_script(self._SCRIPT)
+        try:
+            completed = subprocess.run(
+                [self.windows_python, script_path],
+                input=json.dumps(request, ensure_ascii=True),
+                text=True,
+                capture_output=True,
+                timeout=self.timeout_seconds,
+                check=False,
+            )
+        finally:
+            try:
+                cleanup_path.unlink(missing_ok=True)
+            except OSError:
+                pass
+        if completed.returncode != 0:
+            raise RuntimeError(
+                f"gm subprocess failed with code {completed.returncode}: "
+                f"{completed.stderr.strip() or completed.stdout.strip()}"
+            )
+        try:
+            result = json.loads(completed.stdout.strip().splitlines()[-1])
+        except (IndexError, json.JSONDecodeError) as exc:
+            output = completed.stdout[:500] or completed.stderr[:500]
+            raise RuntimeError(f"gm subprocess returned non-json output: {output}") from exc
+        if not result.get("ok"):
+            message = result.get("error", "unknown gm error")
+            raise RuntimeError(f"gm {payload.get('action')} failed: {message}")
+        return result
+
+    def fetch_daily_bars(
+        self,
+        symbols: Sequence[str],
+        *,
+        start_date: str = "",
+        end_date: str = "",
+        frequency: str = "1d",
+        adjust: int | None = None,
+    ) -> TabularDataset:
+        symbol_list = _ensure_symbol_list(symbols)
+        result = self._run(
+            {
+                "action": "daily_bars",
+                "symbols": [_project_symbol_to_gm(symbol) for symbol in symbol_list],
+                "frequency": frequency,
+                "start_time": _gm_datetime_text(start_date, "09:30:00"),
+                "end_time": _gm_datetime_text(end_date, "15:00:00"),
+                "adjust": adjust,
+            }
+        )
+        data = _normalize_gm_bar_frame(pd.DataFrame(result.get("records", [])))
+        return TabularDataset(
+            domain=DataDomain.DAILY_BAR,
+            source=self.name,
+            data=data,
+            requested_symbols=tuple(symbol_list),
+            coverage_symbols=_coverage_symbols(data),
+            asof_date=_max_asof_date(data, ["trade_date"]),
+            fetch_time=_utc_now_iso(),
+            quality_flags=("backup_reference", "gm_windows_sdk"),
+            metadata={"sdk_version": result.get("version", ""), "windows_python": self.windows_python},
+        )
+
+    def fetch_instrument_basics(self, symbols: Sequence[str]) -> TabularDataset:
+        symbol_list = _ensure_symbol_list(symbols)
+        result = self._run(
+            {
+                "action": "instrument",
+                "symbols": [_project_symbol_to_gm(symbol) for symbol in symbol_list],
+            }
+        )
+        data = _normalize_gm_instrument_frame(pd.DataFrame(result.get("records", [])))
+        return TabularDataset(
+            domain=DataDomain.INSTRUMENT,
+            source=self.name,
+            data=data,
+            requested_symbols=tuple(symbol_list),
+            coverage_symbols=_coverage_symbols(data),
+            asof_date=_max_asof_date(data, ["list_date", "delist_date"]),
+            fetch_time=_utc_now_iso(),
+            quality_flags=("backup_reference", "gm_windows_sdk"),
+            metadata={"sdk_version": result.get("version", ""), "windows_python": self.windows_python},
+        )
+
+    def fetch_financials(
+        self,
+        symbols: Sequence[str],
+        *,
+        tables: Sequence[str] = ("Balance", "Income", "CashFlow"),
+        start_date: str = "",
+        end_date: str = "",
+        report_type: str = "report_time",
+    ) -> FinancialDataset:
+        symbol_list = _ensure_symbol_list(symbols)
+        result = self._run(
+            {
+                "action": "financials",
+                "symbols": [_project_symbol_to_gm(symbol) for symbol in symbol_list],
+                "tables": list(tables),
+                "start_date": _gm_date_text(start_date),
+                "end_date": _gm_date_text(end_date),
+            }
+        )
+        normalized_tables = {
+            table: _normalize_gm_financial_frame(pd.DataFrame(records))
+            for table, records in result.get("tables", {}).items()
+        }
+
+        coverage: set[str] = set()
+        asof_candidates = []
+        for frame in normalized_tables.values():
+            coverage.update(_coverage_symbols(frame))
+            asof_candidates.append(_max_asof_date(frame, ["report_date", "announce_date"]))
+
+        return FinancialDataset(
+            source=self.name,
+            tables=normalized_tables,
+            requested_symbols=tuple(symbol_list),
+            coverage_symbols=tuple(sorted(coverage)),
+            asof_date=max([value for value in asof_candidates if value], default=""),
+            fetch_time=_utc_now_iso(),
+            is_fallback=True,
+            quality_flags=("backup_reference", "gm_windows_sdk"),
+            metadata={
+                "tables": list(tables),
+                "report_type": report_type,
+                "sdk_version": result.get("version", ""),
+                "windows_python": self.windows_python,
+            },
+        )
+
+
 class ResearchClient:
     """Research-side unified client with explicit primary/fallback/reconcile semantics."""
 
@@ -1248,27 +1760,29 @@ class ResearchClient:
         qmt: QMTResearchSource | None = None,
         tushare: TushareResearchSource | None = None,
         akshare: AkshareResearchSource | None = None,
+        gm: GmResearchSource | None = None,
         policies: dict[DataDomain, DomainPolicy] | None = None,
     ):
         self.sources: dict[SourceName, ResearchSourceAdapter] = {
             SourceName.QMT: qmt or QMTResearchSource(),
             SourceName.TUSHARE: tushare or TushareResearchSource(),
             SourceName.AKSHARE: akshare or AkshareResearchSource(),
+            SourceName.GM: gm or GmResearchSource(),
         }
         self.policies = policies or {
             DataDomain.DAILY_BAR: DomainPolicy(
                 primary=SourceName.QMT,
-                fallbacks=(SourceName.AKSHARE,),
+                fallbacks=(SourceName.AKSHARE, SourceName.GM),
                 compare_fields=("close", "volume"),
             ),
             DataDomain.FINANCIAL: DomainPolicy(
                 primary=SourceName.QMT,
-                fallbacks=(),
-                compare_fields=(),
+                fallbacks=(SourceName.GM,),
+                compare_fields=("report_date", "announce_date"),
             ),
             DataDomain.INSTRUMENT: DomainPolicy(
                 primary=SourceName.QMT,
-                fallbacks=(SourceName.TUSHARE,),
+                fallbacks=(SourceName.TUSHARE, SourceName.GM),
                 compare_fields=("name", "list_date"),
             ),
         }
@@ -1344,6 +1858,19 @@ class ResearchClient:
                         end_date=end_date,
                         adjust=adjust,
                     )
+                elif source_name == SourceName.GM:
+                    adjust = None
+                    if dividend_type in {"front", "front_ratio"}:
+                        adjust = 1
+                    elif dividend_type in {"back", "back_ratio"}:
+                        adjust = 2
+                    dataset = adapter.fetch_daily_bars(  # type: ignore[attr-defined]
+                        symbol_list,
+                        start_date=start_date,
+                        end_date=end_date,
+                        frequency=period,
+                        adjust=adjust,
+                    )
                 else:
                     dataset = adapter.fetch_daily_bars(  # type: ignore[attr-defined]
                         symbol_list,
@@ -1408,17 +1935,40 @@ class ResearchClient:
         start_date: str = "",
         end_date: str = "",
         report_type: str = "report_time",
+        source: SourceName | None = None,
+        allow_fallback: bool = False,
     ) -> FinancialDataset:
         symbol_list = _ensure_symbol_list(symbols)
-        adapter = self.sources[self.policies[DataDomain.FINANCIAL].primary]
-        if not adapter.supports_financials:
-            return FinancialDataset(source=self.policies[DataDomain.FINANCIAL].primary, tables={})
-        return adapter.fetch_financials(  # type: ignore[attr-defined]
-            symbol_list,
-            tables=tables,
-            start_date=start_date,
-            end_date=end_date,
-            report_type=report_type,
+        errors: dict[str, str] = {}
+        order = self._resolve_source_order(DataDomain.FINANCIAL, source=source, allow_fallback=allow_fallback)
+        for index, source_name in enumerate(order):
+            adapter = self.sources[source_name]
+            if not adapter.supports_financials:
+                continue
+            try:
+                dataset = adapter.fetch_financials(  # type: ignore[attr-defined]
+                    symbol_list,
+                    tables=tables,
+                    start_date=start_date,
+                    end_date=end_date,
+                    report_type=report_type,
+                )
+            except Exception as exc:
+                errors[source_name.value] = str(exc)
+                continue
+            dataset.is_fallback = index > 0 or source_name != self.policies[DataDomain.FINANCIAL].primary
+            dataset.metadata.setdefault("errors", {}).update(errors)
+            if not dataset.empty or index == len(order) - 1:
+                return dataset
+        return FinancialDataset(
+            source=order[0],
+            tables={table: pd.DataFrame() for table in tables},
+            requested_symbols=tuple(symbol_list),
+            coverage_symbols=(),
+            fetch_time=_utc_now_iso(),
+            is_fallback=bool(source and source != self.policies[DataDomain.FINANCIAL].primary),
+            quality_flags=("unavailable",),
+            metadata={"errors": errors},
         )
 
     def reconcile_daily_bars(
@@ -1578,6 +2128,7 @@ class ResearchClient:
                 start_date=start_date,
                 end_date=end_date,
                 report_type=financial_report_type,
+                allow_fallback=allow_fallback,
             )
             financial_dir = snapshot_dir / "financial"
             financial_dir.mkdir(exist_ok=True)

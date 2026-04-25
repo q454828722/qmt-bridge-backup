@@ -27,6 +27,7 @@ Mac / Linux (主力机)                    Windows (中转站)
 |------|------|
 | [快速开始](getting-started.md) | 安装、配置、启动服务 |
 | [配置参考](configuration.md) | 所有配置项详解 |
+| [量化代理矩阵](quant-agent-matrix.md) | QMT+A 股环境下的 9 节点研究、风控、执行协作结构 |
 | [REST API 速查](rest-api.md) | 全部 HTTP 端点列表 |
 | [WebSocket](websocket.md) | WebSocket 端点使用指南 |
 | [Python 客户端 API](api/index.md) | `QMTClient` 完整 API 参考 |

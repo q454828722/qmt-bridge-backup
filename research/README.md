@@ -12,6 +12,7 @@
 - `notebooks/`：研究 notebook，按主题或策略拆分
 - `factors/`：因子定义、信号生成、截面处理代码
 - `strategies/`：策略原型、组合构建、回测入口
+- `agents/`：A 股量化代理矩阵、黑板通信主题和轻量路由校验
 - `lib/`：研究侧公共工具，不放服务端逻辑
 - `reference/`：可跟踪的研究参考文件，例如行业映射、公共股票池映射、研究基准配置
 
@@ -30,6 +31,14 @@
 - Tushare / AkShare 只做补充字段、公开校验、缺失兜底
 - 因子回测前先把数据落成一份研究时点快照，避免 notebook 每次运行动态混入不同来源
 - 每张研究表保留 `source`、`asof_date`、`fetch_time`、`version` 字段，方便复盘
+- 代理协作只通过 `research.agents.AgentBlackboard` 中声明的主题传递，避免 Alpha 信号绕过风控和合规直接触发执行
+
+量化代理矩阵入口：
+
+```bash
+just agent-matrix
+just agent-matrix --format json
+```
 
 推荐在 WSL 中使用：
 

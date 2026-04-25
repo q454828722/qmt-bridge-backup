@@ -34,6 +34,7 @@ nav:
   - 快速开始: getting-started.md
   - 配置参考: configuration.md
   - 本地策略 API 手册: local-strategy-api-guide.md
+  - 量化代理矩阵: quant-agent-matrix.md
   - 全 A 数据补齐计划: a-share-data-backfill-plan.md
   - REST API 速查: rest-api.md
   - WebSocket: websocket.md

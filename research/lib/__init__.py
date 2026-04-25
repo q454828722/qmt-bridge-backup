@@ -6,6 +6,7 @@ from .research_client import (
     DataDomain,
     DomainPolicy,
     FinancialDataset,
+    GmResearchSource,
     QMTResearchSource,
     ResearchClient,
     SnapshotBundle,
@@ -18,6 +19,15 @@ from .research_client import (
     load_snapshot,
     write_diff_report,
 )
+from .research_database import (
+    build_factor_price_cache,
+    detect_source_conflicts,
+    ensure_maintenance_layer,
+    insert_source_evidence,
+    start_batch,
+    upsert_daily_bar_delta,
+)
+from .research_database_client import ResearchDatabaseClient, connect_readonly
 from .starbridge_gics4_industry import (
     DEFAULT_QMT_GICS4_CACHE,
     DEFAULT_QMT_GICS4_SUMMARY,
@@ -34,6 +44,7 @@ __all__ = [
     "DEFAULT_QMT_GICS4_SUMMARY",
     "DomainPolicy",
     "FinancialDataset",
+    "GmResearchSource",
     "QMTResearchSource",
     "ResearchClient",
     "SnapshotBundle",
@@ -42,10 +53,18 @@ __all__ = [
     "SourceName",
     "TabularDataset",
     "TushareResearchSource",
+    "ResearchDatabaseClient",
+    "build_factor_price_cache",
+    "connect_readonly",
     "diff_snapshots",
+    "detect_source_conflicts",
+    "ensure_maintenance_layer",
     "fetch_qmt_gics4_industry_map",
+    "insert_source_evidence",
     "load_snapshot",
     "load_cached_qmt_gics4_industry_map",
+    "start_batch",
+    "upsert_daily_bar_delta",
     "write_qmt_gics4_industry_cache",
     "write_diff_report",
 ]

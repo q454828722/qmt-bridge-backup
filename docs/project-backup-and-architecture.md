@@ -32,7 +32,7 @@
 - 客户端代码
 - Windows 启动 / 检查 / 运维脚本
 - WSL 研究工具、研究模板、研究文档
-- 子代理定义
+- 量化代理矩阵定义与通信主题
 - 可跟踪的研究参考文件，例如行业映射缓存
 
 ## 不会进入 Git 的内容
@@ -59,6 +59,7 @@
 3. 研究默认优先使用 QMT 主源
 4. 公开源只做旁路校验和补充
 5. 正式研究尽量先写快照，再做因子计算和差异审计
+6. 研究侧代理协作通过 `research/agents` 的黑板主题连接，Alpha、组合、合规、执行之间不得走未声明捷径
 
 ## 行业中性推荐口径
 
@@ -84,4 +85,5 @@ python scripts/cache_qmt_gics4_industry_map.py
 2. `docs/windows-wsl-operations.md`
 3. `docs/project-backup-and-architecture.md`
 4. `research/README.md`
-5. `docs/local-strategy-api-guide.md`
+5. `docs/quant-agent-matrix.md`
+6. `docs/local-strategy-api-guide.md`
